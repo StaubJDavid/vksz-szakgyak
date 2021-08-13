@@ -2,6 +2,7 @@
 import React from 'react'
 import {Redirect, Route, Switch, useHistory} from 'react-router-dom'
 import {Error500} from './components/Error500'
+import {ErrorEmailUsed} from './components/ErrorEmailUsed'
 import {Error404} from './components/Error404'
 import {toAbsoluteUrl} from '../../../_metronic/helpers'
 
@@ -29,6 +30,9 @@ const ErrorsPage: React.FC = () => {
             <Switch>
               <Route path='/error/404' exact={true}>
                 <Error404 />
+              </Route>
+              <Route path='/error/usedemail' exact={true}>
+                <ErrorEmailUsed />
               </Route>
               <Route path='/error/500' exact={true}>
                 <Error500 />

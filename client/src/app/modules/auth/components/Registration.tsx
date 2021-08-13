@@ -13,6 +13,11 @@ const initialValues = {
   firstname: '',
   lastname: '',
   email: '',
+  zip: '',//
+  city: '',//
+  street: '',//
+  house_number: '',//
+  phone: '',//
   password: '',
   changepassword: '',
   acceptTerms: false,
@@ -32,6 +37,26 @@ const registrationSchema = Yup.object().shape({
     .min(3, 'Minimum 3 symbols')
     .max(50, 'Maximum 50 symbols')
     .required('Last name is required'),
+  zip: Yup.string()//
+    .min(3,'Min is 3')
+    .max(50, 'max is 50')
+    .required('Required'),
+  city: Yup.string()//
+    .min(2,'Min is 2')
+    .max(50, 'max is 50')
+    .required('City is required'),
+  street: Yup.string()//
+    .min(2,'Min is 2')
+    .max(50, 'max is 50')
+    .required('Street is required'),
+  house_number: Yup.string()//
+    .min(0,'Min is 0')
+    .max(50, 'max is 50')
+    .required('House number is required'),
+  phone: Yup.string()//
+    .min(3,'Min is 3')
+    .max(50, 'max is 50')
+    .required('Phone is required'),
   password: Yup.string()
     .min(3, 'Minimum 3 symbols')
     .max(50, 'Maximum 50 symbols')
@@ -54,15 +79,30 @@ export function Registration() {
     onSubmit: (values, {setStatus, setSubmitting}) => {
       setLoading(true)
       setTimeout(() => {
-        register(values.email, values.firstname, values.lastname, values.password)
+        register(
+            values.email, 
+            values.firstname, 
+            values.lastname, 
+            values.password,
+            values.zip,
+            values.city,
+            values.street,
+            values.house_number,
+            values.phone
+            )//Register Function End
           .then(({data: {accessToken}}) => {
             setLoading(false)
             dispatch(auth.actions.login(accessToken))
           })
-          .catch(() => {
+          .catch((error) => {
+            //console.log(error.response.status);
             setLoading(false)
-            setSubmitting(false)
-            setStatus('Registration process has broken')
+            setSubmitting(false)           
+            if(error.response.status === 400){               
+              setStatus('Email is already in use')
+            }else{
+              setStatus('Registration process has broken')
+            }          
           })
       }, 1000)
     },
@@ -108,13 +148,7 @@ export function Registration() {
         <span className='fw-bold text-gray-400 fs-7 mx-2'>OR</span>
         <div className='border-bottom border-gray-300 mw-50 w-100'></div>
       </div>
-
-      {formik.status && (
-        <div className='mb-lg-15 alert alert-danger'>
-          <div className='alert-text font-weight-bold'>{formik.status}</div>
-        </div>
-      )}
-
+      
       {/* begin::Form group Firstname */}
       <div className='row fv-row mb-7'>
         <div className='col-xl-6'>
@@ -200,6 +234,166 @@ export function Registration() {
       </div>
       {/* end::Form group */}
 
+      {/* begin::Form group Zip */}
+      <div className='mb-10 fv-row'>
+        <div className='mb-1'>
+          <label className='form-label fw-bolder text-dark fs-6'>Zip</label>
+          <div className='position-relative mb-3'>
+            <input
+              type='text'
+              placeholder='Zip'
+              autoComplete='off'
+              {...formik.getFieldProps('zip')}
+              className={clsx(
+                'form-control form-control-lg form-control-solid',
+                {
+                  'is-invalid': formik.touched.zip && formik.errors.zip,
+                },
+                {
+                  'is-valid': formik.touched.zip && !formik.errors.zip,
+                }
+              )}
+            />
+            {formik.touched.zip && formik.errors.zip && (
+              <div className='fv-plugins-message-container'>
+                <div className='fv-help-block'>
+                  <span role='alert'>{formik.errors.zip}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* end::Form group */}
+
+      {/* begin::Form group City */}
+      <div className='mb-10 fv-row'>
+        <div className='mb-1'>
+          <label className='form-label fw-bolder text-dark fs-6'>City</label>
+          <div className='position-relative mb-3'>
+            <input
+              type='text'
+              placeholder='City'
+              autoComplete='off'
+              {...formik.getFieldProps('city')}
+              className={clsx(
+                'form-control form-control-lg form-control-solid',
+                {
+                  'is-invalid': formik.touched.city && formik.errors.city,
+                },
+                {
+                  'is-valid': formik.touched.city && !formik.errors.city,
+                }
+              )}
+            />
+            {formik.touched.city && formik.errors.city && (
+              <div className='fv-plugins-message-container'>
+                <div className='fv-help-block'>
+                  <span role='alert'>{formik.errors.city}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* end::Form group */}
+
+      {/* begin::Form group Street */}
+      <div className='mb-10 fv-row'>
+        <div className='mb-1'>
+          <label className='form-label fw-bolder text-dark fs-6'>Street</label>
+          <div className='position-relative mb-3'>
+            <input
+              type='text'
+              placeholder='Street'
+              autoComplete='off'
+              {...formik.getFieldProps('street')}
+              className={clsx(
+                'form-control form-control-lg form-control-solid',
+                {
+                  'is-invalid': formik.touched.street && formik.errors.street,
+                },
+                {
+                  'is-valid': formik.touched.street && !formik.errors.street,
+                }
+              )}
+            />
+            {formik.touched.street && formik.errors.street && (
+              <div className='fv-plugins-message-container'>
+                <div className='fv-help-block'>
+                  <span role='alert'>{formik.errors.street}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* end::Form group */}
+
+      {/* begin::Form group House Number */}
+      <div className='mb-10 fv-row'>
+        <div className='mb-1'>
+          <label className='form-label fw-bolder text-dark fs-6'>House Number</label>
+          <div className='position-relative mb-3'>
+            <input
+              type='text'
+              placeholder='House Number'
+              autoComplete='off'
+              {...formik.getFieldProps('house_number')}
+              className={clsx(
+                'form-control form-control-lg form-control-solid',
+                {
+                  'is-invalid': formik.touched.house_number && formik.errors.house_number,
+                },
+                {
+                  'is-valid': formik.touched.house_number && !formik.errors.house_number,
+                }
+              )}
+            />
+            {formik.touched.house_number && formik.errors.house_number && (
+              <div className='fv-plugins-message-container'>
+                <div className='fv-help-block'>
+                  <span role='alert'>{formik.errors.house_number}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* end::Form group */}
+
+      {/* begin::Form group Phone */}
+      <div className='mb-10 fv-row'>
+        <div className='mb-1'>
+          <label className='form-label fw-bolder text-dark fs-6'>Phone</label>
+          <div className='position-relative mb-3'>
+            <input
+              type='text'
+              placeholder='Phone'
+              autoComplete='off'
+              {...formik.getFieldProps('phone')}
+              className={clsx(
+                'form-control form-control-lg form-control-solid',
+                {
+                  'is-invalid': formik.touched.phone && formik.errors.phone,
+                },
+                {
+                  'is-valid': formik.touched.phone && !formik.errors.phone,
+                }
+              )}
+            />
+            {formik.touched.phone && formik.errors.phone && (
+              <div className='fv-plugins-message-container'>
+                <div className='fv-help-block'>
+                  <span role='alert'>{formik.errors.phone}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* end::Form group */}
+
       {/* begin::Form group Password */}
       <div className='mb-10 fv-row' data-kt-password-meter='true'>
         <div className='mb-1'>
@@ -260,7 +454,7 @@ export function Registration() {
       </div>
       {/* end::Form group */}
 
-      {/* begin::Form group */}
+      {/* begin::Form group Terms and condition*/}
       <div className='fv-row mb-10'>
         <div className='form-check form-check-custom form-check-solid'>
           <input
@@ -290,7 +484,13 @@ export function Registration() {
       </div>
       {/* end::Form group */}
 
-      {/* begin::Form group */}
+      {formik.status && (
+        <div className='mb-lg-15 alert alert-danger'>
+          <div className='alert-text font-weight-bold'>{formik.status}</div>
+        </div>
+      )}
+
+      {/* begin::Form group Submit button*/}
       <div className='text-center'>
         <button
           type='submit'

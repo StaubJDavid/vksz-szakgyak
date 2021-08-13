@@ -43,6 +43,7 @@ const Mixed: FC = () => {
         {/* begin::Col */}
         <div className='col-xl-4'>
           <MixedWidget2
+            sentDownProp="PlaceHolder"
             className='card-xl-stretch mb-xl-8'
             chartColor='info'
             chartHeight='200px'
@@ -54,6 +55,7 @@ const Mixed: FC = () => {
         {/* begin::Col */}
         <div className='col-xl-4'>
           <MixedWidget2
+          sentDownProp="PlaceHolder"
             className='card-xl-stretch mb-xl-8'
             chartColor='danger'
             chartHeight='200px'
@@ -65,6 +67,7 @@ const Mixed: FC = () => {
         {/* begin::Col */}
         <div className='col-xl-4'>
           <MixedWidget2
+            sentDownProp="PlaceHolder"
             className='card-xl-stretch mb-5 mb-xl-8'
             chartColor='primary'
             chartHeight='200px'

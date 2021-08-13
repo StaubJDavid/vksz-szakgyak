@@ -10,9 +10,10 @@ type Props = {
   chartColor: string
   strokeColor: string
   chartHeight: string
+  sentDownProp: string
 }
 
-const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, strokeColor}) => {
+const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, strokeColor, sentDownProp}) => {
   const chartRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -79,7 +80,7 @@ const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, stro
                 className='svg-icon-3x svg-icon-warning d-block my-2'
               />
               <a href='#' className='text-warning fw-bold fs-6'>
-                Weekly Sales
+                {sentDownProp}
               </a>
             </div>
             {/* end::Col */}

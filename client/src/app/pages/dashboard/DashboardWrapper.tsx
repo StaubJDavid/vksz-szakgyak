@@ -15,13 +15,20 @@ import {
   TablesWidget10,
   MixedWidget8,
 } from '../../../_metronic/partials/widgets'
+import {useSelector} from 'react-redux'
+import * as auth from '../../modules/auth/redux/AuthRedux'
 
-const DashboardPage: FC = () => (
-  <>
+type Props = {
+  sentDownProp: string
+}
+
+const DashboardPage: FC<Props> = ({ sentDownProp }) => ( 
+  <> 
     {/* begin::Row */}
     <div className='row gy-5 g-xl-8'>
       <div className='col-xxl-4'>
         <MixedWidget2
+          sentDownProp={sentDownProp}
           className='card-xl-stretch mb-xl-8'
           chartColor='danger'
           chartHeight='200px'
@@ -89,10 +96,14 @@ const DashboardPage: FC = () => (
 
 const DashboardWrapper: FC = () => {
   const intl = useIntl()
+  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
+  const stuff2 = JSON.parse(stuff);
+  const user = stuff2.payload.user.auth.user;
+  console.log(user)
   return (
     <>
       <PageTitle breadcrumbs={[]}>{intl.formatMessage({id: 'MENU.DASHBOARD'})}</PageTitle>
-      <DashboardPage />
+      <DashboardPage sentDownProp={user.password} />
     </>
   )
 }
