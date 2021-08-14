@@ -16,27 +16,30 @@ router.post('/login', (req, res) => {
 
     let query = db.query("SELECT * FROM users WHERE email LIKE ?",[email], (err, results) => {
         if(err){
-            res.send('Hiba');
+            console.loh('Bad query');
+            res.status(400).json('Bad query');
         }else {
             console.log(results.length);
             console.log(results);
             if(results.length === 1){
                 const userEmail = results[0].email;
-                const dbPassHash = results[0].pw_hash;
-                if(userEmail){
+                //const dbPassHash = results[0].pw_hash;
+                if(userEmail === email && bcrypt.compareSync(password, results[0].pw_hash)){
                     //Generate webtoken
-                    const accessToken = jwt.sign({ email: userEmail, role: "user"},
-                        process.env.SECRET_KEY,
-                        {expiresIn: "2m"}
+                    const accessToken = jwt.sign({ email: userEmail, role: results[0].role},
+                            process.env.SECRET_KEY,
+                            {expiresIn: "2m"}
                         );
                     res.json({
                         accessToken: accessToken
                     });
                 }else{
-                    res.status(400).json('Username or password incorrect');
+                    console.log("Wrong password");
+                    res.status(400).json('Wrong password');
                 }
             }else{
-                res.status(400).json('Username or password incorrect');
+                console.log("No Email found");
+                res.status(400).json('No registered email found');
             }            
         }
     });
@@ -86,7 +89,7 @@ router.post('/register', (req, res) => {
                         console.log(err);
                         res.status(400).end();
                     }else{
-                        console.log(results);
+                        //console.log(results);
                         const accessToken = jwt.sign({ email: email, role: "user"},
                             process.env.SECRET_KEY,
                             {expiresIn: "2m"}
@@ -121,10 +124,20 @@ const verify = (req, res, next) =>{
 
 //Send User Model
 router.get('/get-user', verify, (req, res) => {
-    const email = jwt_decode(req.headers.authorization);
-    console.log(jwt_decode(req.headers.authorization));
-    // console.log(req.hea)
-    res.json({id:1, username:"admin", password:"hashed", email:email.email, firstname:"firstname",lastname:"lastname"});
+    console.log("User: " + req.user.email);
+    console.log("User: " + req.user.role);
+
+    db.query('SELECT * FROM users WHERE email LIKE ?',req.user.email, (err, results) => {
+        if(err){
+            res.status(400).json('Query error');
+        }else{
+            const {id, email, last_name, first_name, role, pw_hash} = results[0];
+            res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});
+            console.log('Sent json');
+        }
+        
+    });
+    
 });
 
 module.exports = router;
