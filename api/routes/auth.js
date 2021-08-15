@@ -18,11 +18,11 @@ router.post('/login', (req, res) => {
                         'LEFT JOIN `blacklist` b ON u.email = b.email ' +
                         'WHERE u.email LIKE ?',[email], (err, results) => {
         if(err){
-            console.loh('Bad query');
+            console.log('Bad query');
             res.status(400).json('Bad query');
         }else {
-            console.log(results.length);
-            console.log(results);
+            // console.log(results.length);
+            // console.log(results);
             if(results.length === 1 && results[0].BlackListEmail === null){
                 const userEmail = results[0].email;
                 //const dbPassHash = results[0].pw_hash;
@@ -30,7 +30,7 @@ router.post('/login', (req, res) => {
                     //Generate webtoken
                     const accessToken = jwt.sign({ email: userEmail, role: results[0].role},
                             process.env.SECRET_KEY,
-                            {expiresIn: "2m"}
+                            {expiresIn: "10m"}
                         );
                     res.json({
                         accessToken: accessToken
@@ -72,7 +72,7 @@ router.get('/pfp', (req, res) => {
 router.post('/register', (req, res) => {
     const {email, firstname, lastname, password, zip, city, street, house_number, phone} = req.body;
 
-    const avatarData = fs.readFileSync('./src/blank.png', {encoding: 'base64'});
+    const avatarData = fs.readFileSync('./src/test.jpg', {encoding: 'base64'});
 
     //Password Crypt
     const hash = bcrypt.hashSync(password, saltRounds); 
@@ -93,6 +93,7 @@ router.post('/register', (req, res) => {
             };
 
     let blacklisted = 0;
+    //Check the blacklist table for email
     db.query('SELECT * FROM `blacklist` WHERE email LIKE ?', [email], (err1, results1) => {
         if(err1){
             console.log(err1);
@@ -101,15 +102,13 @@ router.post('/register', (req, res) => {
             if(results1.length === 1){
                 blacklisted = 1;
             }
-
-            console.log('Blacklisted?: ' + blacklisted);
             //Is Email in db?
             db.query('SELECT * FROM `users` WHERE email LIKE ?', [email], (err2, results2) => {
                 if(err2){
                     console.log(err2);
                     res.status(400).end();
                 }else{
-                    //If didn't register before
+                    //Check if registered before and if blacklisted
                     if(results2.length === 0 && blacklisted === 0){
                         //Insert gottten user
                         db.query('INSERT INTO users SET ?', user, (err3, results3) => {
@@ -117,21 +116,46 @@ router.post('/register', (req, res) => {
                                 console.log(err3);
                                 res.status(400).end();
                             }else{
-                                //console.log(results);
-                                const accessToken = jwt.sign({ email: email, role: "user"},
-                                    process.env.SECRET_KEY,
-                                    {expiresIn: "2m"}
-                                );
-                                res.json({accessToken: accessToken});
+
+                                //Get all of the news services 
+                                db.query('SELECT * FROM `news_services`', (err4, results4) => {
+                                    if(err4){
+                                        console.log(err4);
+                                    }else{
+                                        //Make the notifications populating query
+                                        let sql = 'INSERT INTO `user_notifs` (email, service_name) VALUES ';
+                                        results4.map(r => {
+                                            sql += `('${email}', '${r.service_name}'),`;
+                                        });
+                                        var str1 = sql.replace(/,$/,";");
+                                        console.log(str1);
+
+                                        //Execute the notifications populating query
+                                        db.query(str1, (err5, results5) => {
+                                            if(err5){
+                                                console.log(err5);
+                                                res.status(400).end();
+                                            }else{
+                                                //Everything is good, inserted user to users table, inserted default user notifications into user_notifs
+                                                //Create a JWT with current user email, and role user
+                                                const accessToken = jwt.sign({ email: email, role: "user"},
+                                                    process.env.SECRET_KEY,
+                                                    {expiresIn: "2m"}
+                                                );
+                                                //Send the auth model to frontend
+                                                res.json({accessToken: accessToken});
+                                            }
+                                        });                                       
+                                    }       
+                                });                               
                             }
                         });
                     }else{
-                        // if(results2.length > 0){
-                        //     res.status(400).end();
-                        // }
-
+                        //If already registered or blacklisted
                         if(blacklisted === 1){
                             res.status(400).json('Email blacklisted');
+                        }else{
+                            res.status(400).json('Email already registered');
                         }
                     }
                 }        
@@ -144,6 +168,8 @@ const verify = (req, res, next) =>{
     const authHeader = req.headers.authorization;
 
     if(authHeader){
+        //authHeader: "Bearer ..."
+        //Remove the Bearer part
         const token = authHeader.split(" ")[1];
         jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
             if(err){
@@ -167,13 +193,66 @@ router.get('/get-user', verify, (req, res) => {
         if(err){
             res.status(400).json('Query error');
         }else{
-            const {id, email, last_name, first_name, role, pw_hash} = results[0];
-            res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});
-            console.log('Sent json');
+            const {id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
+
+            db.query('SELECT * FROM `user_notifs` WHERE email LIKE ?', email, (err1, results1) => {
+                if(err1){
+                    console.log(err1);
+                    res.send(err1);
+                }else{
+                    if(results1.length !== 0){
+                        let communications = [];
+                        results1.map(r => {
+                            communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up});
+                        });
+                        // console.log(communication);
+                        // res.send(communication);
+                        console.log(Buffer.from(avatar, 'base64').toString('base64') === avatar);
+                        res.json({
+                            id: id,
+                            username: last_name + " " + first_name,
+                            password: "no password for u",
+                            email: email,
+                            firstname: first_name,
+                            lastname: last_name,
+                            phone: phone,
+                            roles: [role],
+                            pic: avatar,
+                            address: {addressLine: zip + " " + city + " " + street + " " + house_number, city: city, state: city + ' megye', street: street, house_number: house_number, postCode: zip},
+                            communication: communications
+                        });
+                        console.log('Sent json');
+                    }else{
+                        console.log('Not Good');
+                        res.send('Not Good');
+                    }           
+                }
+            });
+            //res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});           
         }
         
     });
     
+});
+
+router.put('/update-notifications', verify, (req,res) => {
+    let count = 0;
+    req.body.notifications.map((n) => {
+        db.query('UPDATE `user_notifs` SET `notif_email`= ? , `notif_sms` = ? , `notif_push_up` = ? WHERE `email` LIKE ? && `service_name` LIKE ?', 
+                [n.email, n.sms, n.phone, req.user.email, n.name], 
+                (err, results) => {
+                    if(err){
+                        console.log(err);
+                        res.json({result: false});
+                    }{
+                        count++;
+                        if(count === req.body.notifications.length){
+                            res.json({result: true});
+                        }
+                    }
+                }
+        )
+    });   
 });
 
 module.exports = router;

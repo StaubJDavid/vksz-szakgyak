@@ -4,9 +4,16 @@ import {KTSVG, toAbsoluteUrl} from '../../../_metronic/helpers'
 import {Link} from 'react-router-dom'
 import {Dropdown1} from '../../../_metronic/partials'
 import {useLocation} from 'react-router'
+import {useSelector} from 'react-redux'
+import * as auth from '../auth/redux/AuthRedux'
 
 const AccountHeader: React.FC = () => {
   const location = useLocation()
+
+  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
+  const stuff2 = JSON.parse(stuff);
+  const user = stuff2.payload.user.auth.user;
+  let base64ToString = Buffer.from(user.pic.data, "base64").toString();
 
   return (
     <div className='card mb-5 mb-xl-10'>
@@ -14,8 +21,11 @@ const AccountHeader: React.FC = () => {
         <div className='d-flex flex-wrap flex-sm-nowrap mb-3'>
           <div className='me-7 mb-4'>
             <div className='symbol symbol-100px symbol-lg-160px symbol-fixed position-relative'>
-              <img src={toAbsoluteUrl('/media/avatars/150-2.jpg')} alt='Metronic' />
+              <img src={"data:image/jpeg;base64,"+base64ToString} alt='Metronic' />
               <div className='position-absolute translate-middle bottom-0 start-100 mb-6 bg-success rounded-circle border border-4 border-white h-20px w-20px'></div>
+              <form>
+                <input type="file" accept=".jpg, .png, .jpeg" />
+              </form>
             </div>
           </div>
 

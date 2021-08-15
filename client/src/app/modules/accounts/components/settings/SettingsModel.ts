@@ -44,24 +44,29 @@ export interface IEmailPreferences {
 }
 
 export interface INotifications {
-  notifications: {
+  Hulladékszállítás: {
     email: boolean
+    sms: boolean
     phone: boolean
   }
-  billingUpdates: {
+  Lomtalanítás: {
     email: boolean
+    sms: boolean
     phone: boolean
   }
-  newTeamMembers: {
+  Hírek: {
     email: boolean
+    sms: boolean
     phone: boolean
   }
-  completeProjects: {
+  Valami: {
     email: boolean
+    sms: boolean
     phone: boolean
   }
-  newsletters: {
+  PluszCucc: {
     email: boolean
+    sms: boolean
     phone: boolean
   }
 }
@@ -116,24 +121,29 @@ export const emailPreferences: IEmailPreferences = {
 }
 
 export const notifications: INotifications = {
-  notifications: {
+  Hulladékszállítás: {
     email: true,
+    sms: false,
     phone: true,
   },
-  billingUpdates: {
+  Lomtalanítás: {
     email: true,
+    sms: false,
     phone: true,
   },
-  newTeamMembers: {
+  Hírek: {
     email: true,
+    sms: false,
     phone: false,
   },
-  completeProjects: {
+  Valami: {
     email: false,
+    sms: false,
     phone: true,
   },
-  newsletters: {
+  PluszCucc: {
     email: false,
+    sms: false,
     phone: false,
   },
 }

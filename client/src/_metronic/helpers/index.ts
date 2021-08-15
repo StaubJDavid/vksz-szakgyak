@@ -1,4 +1,5 @@
 export * from './AssetHelpers'
 export * from './RouterHelpers'
 export * from './components/KTSVG'
+export * from './components/ProfilePic'
 export * from './dataExamples'

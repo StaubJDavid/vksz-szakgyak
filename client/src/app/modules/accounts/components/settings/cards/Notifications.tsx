@@ -1,12 +1,31 @@
 import React, {useState} from 'react'
-import {INotifications, notifications} from '../SettingsModel'
+//import {INotifications, notifications} from '../SettingsModel'
+import {useSelector} from 'react-redux'
+import * as auth from '../../../../auth/redux/AuthRedux'
+import {updateNotifications} from '../../../../auth/redux/AuthCRUD'
+import { UserCommunicationModel } from '../../../../auth/models/UserCommunicationModel'
 
 const Notifications: React.FC = () => {
-  const [data, setData] = useState<INotifications>(notifications)
+  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
+  const stuff2 = JSON.parse(stuff);
+  const user = stuff2.payload.user.auth.user;
 
-  const updateData = (fieldsToUpdate: Partial<INotifications>) => {
-    const updatedData = {...data, ...fieldsToUpdate}
-    setData(updatedData)
+  const [data, setData] = useState<UserCommunicationModel[]>(user.communication)
+
+  console.log('Data: ' + JSON.stringify(data));
+
+  const updateData = (fieldsToUpdate: UserCommunicationModel) => {
+    // let found:UserCommunicationModel = user.communication.find((element:UserCommunicationModel) => element.name === fieldsToUpdate.name);
+    let index = user.communication.findIndex((element:UserCommunicationModel) => element.name === fieldsToUpdate.name)
+    // console.log('Found: ' + found.name + ' Email: ' + found.email + ' sms: ' +  found.sms + ' phone: ' +  found.phone);
+    // console.log('Field: ' + fieldsToUpdate.name + ' Email: ' + fieldsToUpdate.email + ' sms: ' +  fieldsToUpdate.sms + ' phone: ' +  fieldsToUpdate.phone);
+    // console.log('Index: ' + index);
+    
+    setData([ ...data.slice(0,index),
+              Object.assign({}, data[index], fieldsToUpdate),
+              ...data.slice(index+1)
+            ]);
+    // console.log('New data: ' + JSON.stringify(data))
   }
 
   const [loading, setLoading] = useState(false)
@@ -14,9 +33,18 @@ const Notifications: React.FC = () => {
   const click = () => {
     setLoading(true)
     setTimeout(() => {
-      setLoading(false)
+      updateNotifications(data).then(({data: {result}}) => {
+        setLoading(false);
+        console.log('Visszakaptam: ' + result);
+      }).catch((error) => {
+        setLoading(false);
+        console.log('Error');
+      })
+      
     }, 1000)
   }
+
+  
 
   return (
     <div className='card mb-5 mb-xl-10'>
@@ -33,67 +61,106 @@ const Notifications: React.FC = () => {
         </div>
       </div>
 
+
       <div id='kt_account_notifications' className='collapse show'>
         <form className='form'>
           <div className='card-body border-top px-9 pt-3 pb-4'>
             <div className='table-responsive'>
               <table className='table table-row-dashed border-gray-300 align-middle gy-6'>
                 <tbody className='fs-6 fw-bold'>
-                  <tr>
-                    <td className='min-w-250px fs-4 fw-bolder'>Notifications</td>
+
+                  {/* begin::First Row begin */}
+                  {data.map((c:UserCommunicationModel) => (
+                    <tr>
+                    <td className='min-w-250px fs-4 fw-bolder'>{c.name}</td>
+                    {/* begin::Email box start */}
                     <td className='w-125px'>
                       <div className='form-check form-check-solid'>
                         <input
                           className='form-check-input'
                           type='checkbox'
                           value=''
-                          id='kt_settings_notification_email'
-                          defaultChecked={data.notifications.email}
+                          id={'kt_settings_' + c.name + '_email'}
+                          defaultChecked={c.email}
                           onChange={() =>
                             updateData({
-                              notifications: {
-                                phone: data.notifications.phone,
-                                email: !data.notifications.email,
-                              },
+                                name: c.name,
+                                phone: c.phone,
+                                sms: c.sms,
+                                email: !c.email,
                             })
                           }
                         />
                         <label
                           className='form-check-label ps-2'
-                          htmlFor='kt_settings_notification_email'
+                          htmlFor={'kt_settings_' + c.name + '_email'}
                         >
                           Email
                         </label>
                       </div>
                     </td>
+                    {/* begin::Email box end */}
+
+                    {/* begin::SMS box begin */}
                     <td className='w-125px'>
                       <div className='form-check form-check-solid'>
                         <input
                           className='form-check-input'
                           type='checkbox'
                           value=''
-                          id='kt_settings_notification_phone'
-                          defaultChecked={data.notifications.phone}
+                          id={'kt_settings_' + c.name + '_sms'}
+                          defaultChecked={c.sms}
                           onChange={() =>
                             updateData({
-                              notifications: {
-                                phone: !data.notifications.phone,
-                                email: data.notifications.email,
-                              },
-                            })
+                              name: c.name,
+                              phone: c.phone,
+                              sms: !c.sms,
+                              email: c.email,
+                          })
                           }
                         />
                         <label
                           className='form-check-label ps-2'
-                          htmlFor='kt_settings_notification_phone'
+                          htmlFor={'kt_settings_' + c.name + '_sms'}
+                        >
+                          SMS
+                        </label>
+                      </div>
+                    </td>
+                    {/* begin::SMS box end */}
+
+                    {/* begin::Phone box begin */}
+                    <td className='w-125px'>
+                      <div className='form-check form-check-solid'>
+                        <input
+                          className='form-check-input'
+                          type='checkbox'
+                          value=''
+                          id={'kt_settings_' + c.name + '_phone'}
+                          defaultChecked={c.phone}
+                          onChange={() =>
+                            updateData({
+                              name: c.name,
+                              phone: !c.phone,
+                              sms: c.sms,
+                              email: c.email,
+                          })
+                          }
+                        />
+                        <label
+                          className='form-check-label ps-2'
+                          htmlFor={'kt_settings_' + c.name + '_phone'}
                         >
                           Phone
                         </label>
                       </div>
                     </td>
-                  </tr>
+                    {/* begin::Phone box end */}
+                  </tr>                 
+                  ))}
+                  {/* begin::First Row end */}
 
-                  <tr>
+                  {/*<tr>
                     <td>Billing Updates</td>
                     <td>
                       <div className='form-check form-check-solid'>
@@ -268,7 +335,7 @@ const Notifications: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                </tbody>
+                        */}</tbody>
               </table>
             </div>
           </div>
