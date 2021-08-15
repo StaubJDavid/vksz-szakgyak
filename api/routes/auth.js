@@ -14,14 +14,16 @@ const fs = require('fs');
 router.post('/login', (req, res) => {
     const { email, password} = req.body;
 
-    let query = db.query("SELECT * FROM users WHERE email LIKE ?",[email], (err, results) => {
+    let query = db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+                        'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+                        'WHERE u.email LIKE ?',[email], (err, results) => {
         if(err){
             console.loh('Bad query');
             res.status(400).json('Bad query');
         }else {
             console.log(results.length);
             console.log(results);
-            if(results.length === 1){
+            if(results.length === 1 && results[0].BlackListEmail === null){
                 const userEmail = results[0].email;
                 //const dbPassHash = results[0].pw_hash;
                 if(userEmail === email && bcrypt.compareSync(password, results[0].pw_hash)){
@@ -38,8 +40,22 @@ router.post('/login', (req, res) => {
                     res.status(400).json('Wrong password');
                 }
             }else{
-                console.log("No Email found");
-                res.status(400).json('No registered email found');
+                //Error handling
+                if(results.length === 0){
+                    console.log("No Email found");
+                    res.status(400).json('No registered email found');
+                }
+
+                if(results.length > 1){
+                    console.log("More Email found?");
+                    res.status(400).json('More Email found');
+                }
+
+                if(results[0].BlackListEmail !== null){
+                    console.log("Email blacklisted?");
+                    res.status(400).json('Email blacklisted');
+                }
+                
             }            
         }
     });
@@ -75,33 +91,53 @@ router.post('/register', (req, res) => {
                 role: 'user',
                 avatar: avatarData,
             };
-    //Is Email in db?
-    db.query('SELECT * FROM users WHERE email LIKE ?', [email], (err, results) => {
-        if(err){
-            console.log(err);
+
+    let blacklisted = 0;
+    db.query('SELECT * FROM `blacklist` WHERE email LIKE ?', [email], (err1, results1) => {
+        if(err1){
+            console.log(err1);
             res.status(400).end();
         }else{
-            //If didn't register before
-            if(results.length === 0){
-                //Insert gottten user
-                db.query('INSERT INTO users SET ?', user, (err, results) => {
-                    if(err){
-                        console.log(err);
-                        res.status(400).end();
-                    }else{
-                        //console.log(results);
-                        const accessToken = jwt.sign({ email: email, role: "user"},
-                            process.env.SECRET_KEY,
-                            {expiresIn: "2m"}
-                        );
-                        res.json({accessToken: accessToken});
-                    }
-                });
-            }else{
-                res.status(400).end();
+            if(results1.length === 1){
+                blacklisted = 1;
             }
-        }        
-    });  
+
+            console.log('Blacklisted?: ' + blacklisted);
+            //Is Email in db?
+            db.query('SELECT * FROM `users` WHERE email LIKE ?', [email], (err2, results2) => {
+                if(err2){
+                    console.log(err2);
+                    res.status(400).end();
+                }else{
+                    //If didn't register before
+                    if(results2.length === 0 && blacklisted === 0){
+                        //Insert gottten user
+                        db.query('INSERT INTO users SET ?', user, (err3, results3) => {
+                            if(err3){
+                                console.log(err3);
+                                res.status(400).end();
+                            }else{
+                                //console.log(results);
+                                const accessToken = jwt.sign({ email: email, role: "user"},
+                                    process.env.SECRET_KEY,
+                                    {expiresIn: "2m"}
+                                );
+                                res.json({accessToken: accessToken});
+                            }
+                        });
+                    }else{
+                        // if(results2.length > 0){
+                        //     res.status(400).end();
+                        // }
+
+                        if(blacklisted === 1){
+                            res.status(400).json('Email blacklisted');
+                        }
+                    }
+                }        
+            });  
+        }
+    });   
 });
 
 const verify = (req, res, next) =>{

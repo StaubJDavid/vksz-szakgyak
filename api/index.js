@@ -35,36 +35,53 @@ app.get('/pfp', (req, res) => {
     res.send(avatarData);
 });
 
-// app.get('/query', (req, res) => {
-//     /*const email = 'email@email.com';
-//     let query = db.query('SELECT * FROM users WHERE email LIKE ?', [email], (err, results) => {
-//         if(err){
-//             console.log(err);
-//             res.send(err);
-//         }else{
-//             if(results.length === 0){
-//                 console.log('Mehet a menet');
-//             }
+app.get('/query', (req, res) => {
+    /*const email = 'email@email.com';
+    let query = db.query('SELECT * FROM users WHERE email LIKE ?', [email], (err, results) => {
+        if(err){
+            console.log(err);
+            res.send(err);
+        }else{
+            if(results.length === 0){
+                console.log('Mehet a menet');
+            }
 
-//             res.send(results);
-//         }        
-//     });  */ 
-//     // let query = db.query('SELECT * FROM news_services',(err, results) => {
-//     //     if(err){
-//     //         console.log(err);
-//     //         res.send(err);
-//     //     }else{
-//     //         console.log(results.length);
-//     //         res.send(results);
-//     //     }        
-//     // });
-//     let s = "";
-//     if(s === ""){
-//         console.log('Ures');
-//     } else{
-//         console.log('nem ures');
-//     }
-// });
+            res.send(results);
+        }        
+    });  */ 
+    // let query = db.query('SELECT * FROM news_services',(err, results) => {
+    //     if(err){
+    //         console.log(err);
+    //         res.send(err);
+    //     }else{
+    //         console.log(results.length);
+    //         res.send(results);
+    //     }        
+    // });
+    // let s = "";
+    // if(s === ""){
+    //     console.log('Ures');
+    // } else{
+    //     console.log('nem ures');
+    // }
+    db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+                'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+                'WHERE u.email LIKE ?', 'kavicskah20@gmail.com', 
+                (err, results) => {
+                    if(err){
+                        console.log(err);
+                    }{
+                        console.log(results);
+                        // if(results[0].BlackListEmail === null){
+                        //     console.log(results[0].BlackListEmail);
+                        // }else{
+                        //     console.log('else');
+                        // }
+                        res.send('Done');
+                    }
+                    
+                });
+});
 
 app.get('/createdb', (req, res) => {
     let sql = 'CREATE TABLE IF NOT EXISTS `users` (' +
