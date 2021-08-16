@@ -5,9 +5,9 @@ import {UserEmailSettingsModel} from './UserEmailSettingsModel'
 import {UserSocialNetworksModel} from './UserSocialNetworksModel'
 
 export interface UserModel {
-  id: string
-  username: string
-  password: string | undefined
+  id?: string
+  username?: string
+  password?: string | undefined
   email: string
   firstname: string
   lastname: string
@@ -24,5 +24,11 @@ export interface UserModel {
   auth?: AuthModel
   communication?: Array<UserCommunicationModel>
   address?: UserAddressModel
+  zip?: string
+  city?: string
+  street?: string
+  house_number?: string
   socialNetworks?: UserSocialNetworksModel
+  blacklisted?: number
 }
+

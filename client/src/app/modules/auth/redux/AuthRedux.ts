@@ -16,20 +16,23 @@ export const actionTypes = {
   UserRequested: '[Request User] Action',
   UserLoaded: '[Load User] Auth API',
   SetUser: '[Set User] Action',
+  getUsers: '[Get Users] Action',
 }
 
 const initialAuthState: IAuthState = {
   user: undefined,
+  users: undefined,
   accessToken: undefined,
 }
 
 export interface IAuthState {
   user?: UserModel
+  users?: UserModel[]
   accessToken?: string
 }
 
 export const reducer = persistReducer(
-  {storage, key: 'v100-demo1-auth', whitelist: ['user', 'accessToken']},
+  {storage, key: 'v100-demo1-auth', whitelist: ['user', 'accessToken', 'users']},
   (state: IAuthState = initialAuthState, action: ActionWithPayload<IAuthState>) => {
     switch (action.type) {
       case actionTypes.Login: {
@@ -55,6 +58,11 @@ export const reducer = persistReducer(
         return {...state, user}
       }
 
+      case actionTypes.getUsers: {
+        const users = action.payload?.users
+        return {...state, users}
+      }
+
       case actionTypes.SetUser: {
         const user = action.payload?.user
         return {...state, user}
@@ -77,6 +85,7 @@ export const actions = {
     type: actionTypes.UserRequested,
   }),
   fulfillUser: (user: UserModel) => ({type: actionTypes.UserLoaded, payload: {user}}),
+  getUsers: (users: UserModel[]) => ({type: actionTypes.getUsers, payload: {users}}),
   setUser: (user: UserModel) => ({type: actionTypes.SetUser, payload: {user}}),
 }
 

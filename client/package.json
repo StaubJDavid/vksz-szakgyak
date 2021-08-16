@@ -54,6 +54,7 @@
     "sass": "^1.35.1",
     "socicon": "^3.0.5",
     "typescript": "^4.1.2",
+    "use-force-update": "^1.0.7",
     "web-vitals": "^1.0.1",
     "yup": "^0.32.9"
   },

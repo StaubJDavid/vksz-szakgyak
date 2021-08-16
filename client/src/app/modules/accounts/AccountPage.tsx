@@ -1,9 +1,12 @@
 import React from 'react'
+//, {useEffect, useState}
 import {Redirect, Route, Switch} from 'react-router-dom'
 import {PageLink, PageTitle} from '../../../_metronic/layout/core'
 import {Overview} from './components/Overview'
 import {Settings} from './components/settings/Settings'
 import {AccountHeader} from './AccountHeader'
+// import { getUserByEmail } from '../auth/redux/AuthCRUD'
+// import { UserModel } from '../auth/models/UserModel'
 
 const accountBreadCrumbs: Array<PageLink> = [
   {
@@ -21,6 +24,21 @@ const accountBreadCrumbs: Array<PageLink> = [
 ]
 
 const AccountPage: React.FC = () => {
+  // const [userb, setData] = useState<UserModel>();
+  // useEffect(() => {
+  //     const Users = async () => {
+  //       try {
+  //         const response = await getUserByEmail('davidkah20@gmail.com');
+  //         //usersStuff = ;
+  //         setData(response.data.user);
+  //       } catch (error) {
+  //         console.log(error)
+  //       }
+  //     }
+  
+  //     Users()
+  //   }, []);
+
   return (
     <>
       <AccountHeader />

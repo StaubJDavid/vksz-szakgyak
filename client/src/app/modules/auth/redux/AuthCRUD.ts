@@ -10,6 +10,9 @@ export const LOGIN_URL = `${API_URL}/auth/login`
 export const REGISTER_URL = `${API_URL}/auth/register`
 export const REQUEST_PASSWORD_URL = `${API_URL}/auth/forgot-password`
 export const UPDATE_NOTIFICATIONS_URL = `${API_URL}/auth/update-notifications`
+export const GET_USERS_URL = `${API_URL}/auth/admin/get-users`
+export const USER_BLOCK_UNBLOCK = `${API_URL}/auth/admin/block-user`
+export const CHANGE_USER_DETAILS = `${API_URL}/auth/change-details`
 
 // Server should return AuthModel
 export function login(email: string, password: string) {
@@ -46,8 +49,42 @@ export function requestPassword(email: string) {
   return axios.post<{result: boolean}>(REQUEST_PASSWORD_URL, {email})
 }
 
+export function changeDetails(
+    email: string, 
+    firstname: string, 
+    lastname: string, 
+    zip: string | undefined,
+    city: string | undefined,
+    street: string | undefined,
+    house_number: string | undefined,
+    phone: string | undefined,
+  ) {
+  return axios.post<{result: boolean}>(CHANGE_USER_DETAILS, {
+    email,
+    firstname,
+    lastname,
+    zip,
+    city,
+    street,
+    house_number,
+    phone
+  })
+}
+
 export function updateNotifications(notifications: UserCommunicationModel[]) {
   return axios.put<{result: boolean}>(UPDATE_NOTIFICATIONS_URL, {notifications})
+}
+
+export function getUsers() {
+  return axios.get<{users: UserModel[]}>(GET_USERS_URL)
+}
+
+export function userBlockUnblock(email:string) {
+  return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {email})
+}
+
+export function getUserByEmail(email:string) {
+  return axios.post<{user: UserModel}>(USER_BLOCK_UNBLOCK, {email})
 }
 
 export function getUserByToken() {

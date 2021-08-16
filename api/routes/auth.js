@@ -18,8 +18,8 @@ router.post('/login', (req, res) => {
                         'LEFT JOIN `blacklist` b ON u.email = b.email ' +
                         'WHERE u.email LIKE ?',[email], (err, results) => {
         if(err){
-            console.log('Bad query');
-            res.status(400).json('Bad query');
+            console.log(err);
+            res.status(400).json(err);
         }else {
             // console.log(results.length);
             // console.log(results);
@@ -76,7 +76,7 @@ router.post('/register', (req, res) => {
 
     //Password Crypt
     const hash = bcrypt.hashSync(password, saltRounds); 
-    console.log('HashedPassword2: ' + hash);
+    //console.log('HashedPassword2: ' + hash);
 
     //Define user for "cleaner" query
     let user = {email: email,
@@ -128,7 +128,7 @@ router.post('/register', (req, res) => {
                                             sql += `('${email}', '${r.service_name}'),`;
                                         });
                                         var str1 = sql.replace(/,$/,";");
-                                        console.log(str1);
+                                        //console.log(str1);
 
                                         //Execute the notifications populating query
                                         db.query(str1, (err5, results5) => {
@@ -175,7 +175,7 @@ const verify = (req, res, next) =>{
             if(err){
                 return res.status(403).json("Token is invalid");
             }
-
+            console.log('Authorized');
             req.user = user;
             next();
         });
@@ -186,8 +186,8 @@ const verify = (req, res, next) =>{
 
 //Send User Model
 router.get('/get-user', verify, (req, res) => {
-    console.log("User: " + req.user.email);
-    console.log("User: " + req.user.role);
+    // console.log("User: " + req.user.email);
+    // console.log("User: " + req.user.role);
 
     db.query('SELECT * FROM users WHERE email LIKE ?',req.user.email, (err, results) => {
         if(err){
@@ -207,7 +207,7 @@ router.get('/get-user', verify, (req, res) => {
                         });
                         // console.log(communication);
                         // res.send(communication);
-                        console.log(Buffer.from(avatar, 'base64').toString('base64') === avatar);
+                        //console.log(Buffer.from(avatar, 'base64').toString('base64') === avatar);
                         res.json({
                             id: id,
                             username: last_name + " " + first_name,
@@ -221,7 +221,7 @@ router.get('/get-user', verify, (req, res) => {
                             address: {addressLine: zip + " " + city + " " + street + " " + house_number, city: city, state: city + ' megye', street: street, house_number: house_number, postCode: zip},
                             communication: communications
                         });
-                        console.log('Sent json');
+                        //console.log('Sent json');
                     }else{
                         console.log('Not Good');
                         res.send('Not Good');
@@ -229,11 +229,157 @@ router.get('/get-user', verify, (req, res) => {
                 }
             });
             //res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});           
-        }
-        
-    });
-    
+        }        
+    });   
 });
+
+router.get('/admin/get-user-by-email', verify, (req,res) => {
+    if(req.user.role === 'admin'){
+        db.query('SELECT * FROM users WHERE email LIKE ?',req.body.email, (err, results) => {
+            if(err){
+                res.status(400).json('Query error');
+            }else{
+                const {id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
+    
+                db.query('SELECT * FROM `user_notifs` WHERE email LIKE ?', email, (err1, results1) => {
+                    if(err1){
+                        console.log(err1);
+                        res.send(err1);
+                    }else{
+                        if(results1.length !== 0){
+                            let communications = [];
+                            results1.map(r => {
+                                communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up});
+                            });
+                            // console.log(communication);
+                            // res.send(communication);
+                            //console.log(Buffer.from(avatar, 'base64').toString('base64') === avatar);
+                            res.json({
+                                id: id,
+                                username: last_name + " " + first_name,
+                                password: "no password for u",
+                                email: email,
+                                firstname: first_name,
+                                lastname: last_name,
+                                phone: phone,
+                                roles: [role],
+                                pic: avatar,
+                                address: {addressLine: zip + " " + city + " " + street + " " + house_number, city: city, state: city + ' megye', street: street, house_number: house_number, postCode: zip},
+                                communication: communications
+                            });
+                            //console.log('Sent json');
+                        }else{
+                            console.log('Result is 0');
+                            res.send('Result is 0');
+                        }           
+                    }
+                });
+                //res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});           
+            }        
+        }); 
+    }else{
+        console.log('Nem admin');
+        res.end('No result');
+    }
+})
+
+router.post('/change-details', verify, (req, res) => {
+    console.log(req.user.email);
+    console.log(req.body);
+    db.query('SELECT * FROM `users` WHERE email LIKE ?', [req.user.email], (err, results) => {
+        if(err){
+            console.log(err);
+            res.json({result: false});
+        }else{
+            //console.log(req.body.firstname === '' ? results[0].first_name:req.body.firstname);
+            db.query('UPDATE `users` SET first_name = ? , last_name = ? , zip = ? , city = ? , street = ? , house_number = ? , phone = ? WHERE email LIKE ?', [
+                (req.body.firstname === '' ? results[0].first_name : req.body.firstname),
+                (req.body.lastname === '' ? results[0].last_name : req.body.lastname),
+                (req.body.zip === '' ? results[0].zip : req.body.zip),
+                (req.body.city === '' ? results[0].city : req.body.city),
+                (req.body.street === '' ? results[0].street : req.body.street),
+                (req.body.house_number === '' ? results[0].house_number : req.body.house_number),
+                (req.body.phone === '' ? results[0].phone : req.body.phone),
+                req.user.email
+            ], (err1, results1) => {
+                if(err){
+                    console.log(err1);
+                    res.json({result: false});
+                }else{
+                    //console.log(results1);
+                    res.json({result: true})
+                }
+            })
+        }
+    });
+})
+
+router.get('/admin/get-users', verify, (req, res) => {
+    if(req.user.role === 'admin'){       
+        db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+        'LEFT JOIN `blacklist` b ON u.email = b.email', (err, results) => {
+            if(err){
+                console.log(err);
+                res.status(400).json(err);
+            }else{
+                let users = [];
+                results.map(r => {
+                    users.push({id: r.id, email: r.email, firstname: r.first_name, lastname: r.last_name, pic: r.avatar, phone: r.phone, blacklisted: (r.BlackListEmail === null ? 0:1)});
+                })
+                //console.log(users);
+                res.json({users: users});
+            }
+        })
+    }else{
+        console.log('Nem admin');
+        res.json({result: false});
+    }
+});
+
+router.post('/admin/block-user', verify, (req, res) => {
+    if(req.user.role === 'admin'){
+        // console.log('Requester is admin');
+        // console.log('Email sent: ' + req.body.email);
+        db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+        'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+        'WHERE u.email LIKE ?',[req.body.email], (err, results) => {
+            if(err){
+                console.log(err);
+                res.status(400).json(err);
+            }else{
+                // console.log('BlacklistEmail: ' + results[0].BlackListEmail);
+                // console.log(results[0].BlackListEmail === req.body.email);
+                if(results[0].BlackListEmail === null){
+                    db.query('INSERT INTO `blacklist` (email) VALUES (?)', [req.body.email], (err, results) => {
+                        if(err){
+                            console.log(err);
+                            res.status(400).json({result: false});
+                        }else{
+                            // console.log(results);
+                            res.json({result: true});
+                        }
+                    });
+                }else if(results[0].BlackListEmail === req.body.email){
+                    db.query('DELETE FROM `blacklist` WHERE email LIKE ?', [req.body.email], (err, results) => {
+                        if(err){
+                            console.log(err);
+                            res.status(400).json({result: false});
+                        }else{
+                            // console.log(results);
+                            res.json({result: true});
+                        }
+                    });
+                }else{
+                    console.log('BlacklistMail is not null and not equals the req.body.email');
+                    res.status(400).json({result: false});
+                }
+            }
+        })
+    }else{
+        console.log('Nem admin');
+        res.json({result: false});
+    }
+})
 
 router.put('/update-notifications', verify, (req,res) => {
     let count = 0;

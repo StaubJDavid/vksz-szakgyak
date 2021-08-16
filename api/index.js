@@ -133,6 +133,21 @@ app.get('/query', (req, res) => {
     //         }           
     //     }
     // });
+    db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+                'LEFT JOIN `blacklist` b ON u.email = b.email ', 
+                (err, results) => {
+                    if(err){
+                        console.log(err);
+                    }{
+                        console.log(results);
+                        // if(results[0].BlackListEmail === null){
+                        //     console.log(results[0].BlackListEmail);
+                        // }else{
+                        //     console.log('else');
+                        // }
+                        res.send('Done');
+                    }                    
+                });
 });
 
 app.get('/createdb', (req, res) => {

@@ -12,8 +12,6 @@ const Notifications: React.FC = () => {
 
   const [data, setData] = useState<UserCommunicationModel[]>(user.communication)
 
-  console.log('Data: ' + JSON.stringify(data));
-
   const updateData = (fieldsToUpdate: UserCommunicationModel) => {
     // let found:UserCommunicationModel = user.communication.find((element:UserCommunicationModel) => element.name === fieldsToUpdate.name);
     let index = user.communication.findIndex((element:UserCommunicationModel) => element.name === fieldsToUpdate.name)
@@ -335,7 +333,7 @@ const Notifications: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                        */}</tbody>
+                    */}</tbody>
               </table>
             </div>
           </div>
