@@ -3,12 +3,9 @@ import {Redirect, Route, Switch} from 'react-router-dom'
 import {FallbackView} from '../../_metronic/partials'
 import {DashboardWrapper} from '../pages/dashboard/DashboardWrapper'
 import {MenuTestPage} from '../pages/MenuTestPage'
-import {StateTest} from '../pages/StateTest'
-// import {RootState} from '../../setup'
-
-// import {useSelector, shallowEqual} from 'react-redux'
-//import * as auth from '../modules/auth/redux/AuthRedux'
-// var jwt = require('jsonwebtoken');
+import {AdminBoard} from '../pages/AdminBoard'
+import {GetRole} from '../../_metronic/helpers/components/UserRole'
+import {UserProfile} from '../modules/accounts/components/UserProfile'
 
 
 export function PrivateRoutes() {
@@ -18,11 +15,6 @@ export function PrivateRoutes() {
   const AccountPage = lazy(() => import('../modules/accounts/AccountPage'))
   const WidgetsPage = lazy(() => import('../modules/widgets/WidgetsPage'))
   const ChatPage = lazy(() => import('../modules/apps/chat/ChatPage'))
-
-  // const accessToken = useSelector<RootState>(({auth}) => auth.accessToken, shallowEqual);
-  // var decode1 = jwt.decode(accessToken);
-  // const role = decode1.role;
-  // console.log(decode1.role);
 
   return (
     <Suspense fallback={<FallbackView />}>
@@ -35,9 +27,10 @@ export function PrivateRoutes() {
         <Route path='/crafted/account' component={AccountPage} />
         <Route path='/apps/chat' component={ChatPage} />
         <Route path='/menu-test' component={MenuTestPage} />
-        <Route path='/state-test' component={StateTest} />
+        <Route path='/admin-board' component={AdminBoard} />
+        {GetRole() === 'admin'?(<Route path='/user/:email' component={UserProfile} />):(<><Redirect exact from='/' to='/dashboard' /><Redirect exact from='/user' to='/dashboard' /></>)}
         <Redirect from='/auth' to='/dashboard' />
-        <Redirect exact from='/' to='/dashboard' />
+        {GetRole() === 'user'?(<Redirect exact from='/' to='/dashboard' />):(<Redirect exact from='/' to='/admin-board' />)}
         <Redirect to='error/404' />
       </Switch>
     </Suspense>

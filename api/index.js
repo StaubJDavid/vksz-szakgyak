@@ -8,7 +8,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '12MB' }));
 
 var authRouter = require('./routes/auth');
 
@@ -20,14 +20,21 @@ app.get('/', (req, res) => {
 
 //Helpers/Tests
 app.get('/pfp', (req, res) => {
+    // const email = "davidkah20@gmail.com";
     // fs.readFile('./src/blank.png','base64', (err, data) => {
     //     if(err){
     //         console.log(err);
+    //         res.send(err);
     //     } else {            
-    //         fs.writeFile("./src/out.png", data, 'base64', function(err) {
-    //             console.log(err);
-    //           });
-    //         console.log("Pic decode gucci");
+    //         db.query('UPDATE `users` SET `avatar`= ? WHERE `email` LIKE ? ', [data, email], (err, results) => {
+    //             if(err){
+    //                 console.log(err);
+    //                 res.send(err);
+    //             }else{
+    //                 console.log(results);
+    //                 res.send(data);
+    //             }
+    //         })
     //     }       
     // });
 
@@ -37,22 +44,7 @@ app.get('/pfp', (req, res) => {
     // const avatarData = fs.readFileSync('./src/blank.png', {encoding: 'base64'});
      
     // res.send(avatarData);
-    const email = "davidkah20@gmail.com";
-    db.query('SELECT avatar FROM users WHERE email = ?', [email], (err, results) => {
-        if(err){
-            console.log(err);
-            res.send(err);
-        }else{
-            const img = Buffer.from(results[0].avatar, 'base64');
-            console.log(img);
-            res.writeHead(200, {
-                'Content-Type': 'image/png',
-                'Content-Length': img.length
-             });
-
-            res.end(img); 
-        }
-    });
+    
 });
 
 app.get('/query', (req, res) => {
@@ -133,21 +125,6 @@ app.get('/query', (req, res) => {
     //         }           
     //     }
     // });
-    db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-                'LEFT JOIN `blacklist` b ON u.email = b.email ', 
-                (err, results) => {
-                    if(err){
-                        console.log(err);
-                    }{
-                        console.log(results);
-                        // if(results[0].BlackListEmail === null){
-                        //     console.log(results[0].BlackListEmail);
-                        // }else{
-                        //     console.log('else');
-                        // }
-                        res.send('Done');
-                    }                    
-                });
 });
 
 app.get('/createdb', (req, res) => {

@@ -1,8 +1,11 @@
 import clsx from 'clsx'
 import React, {FC} from 'react'
-import {KTSVG, toAbsoluteUrl} from '../../../helpers'
+import {KTSVG, PFP} from '../../../helpers'
 import {HeaderNotificationsMenu, HeaderUserMenu, QuickLinks} from '../../../partials'
 import {useLayout} from '../../core'
+import {UserModel} from '../../../../app/modules/auth/models/UserModel'
+import {RootState} from '../../../../setup'
+import {shallowEqual, useSelector} from 'react-redux'
 
 const toolbarButtonMarginClass = 'ms-1 ms-lg-3',
   toolbarButtonHeightClass = 'w-30px h-30px w-md-40px h-md-40px',
@@ -10,7 +13,8 @@ const toolbarButtonMarginClass = 'ms-1 ms-lg-3',
   toolbarButtonIconSizeClass = 'svg-icon-1'
 
 const Topbar: FC = () => {
-  const {config} = useLayout()
+  const {config} = useLayout();
+  const user: UserModel = useSelector<RootState>(({auth}) => auth.user, shallowEqual) as UserModel
 
   return (
     <div className='d-flex align-items-stretch flex-shrink-0'>
@@ -106,7 +110,7 @@ const Topbar: FC = () => {
           data-kt-menu-placement='bottom-end'
           data-kt-menu-flip='bottom'
         >
-          <img src={toAbsoluteUrl('/media/avatars/150-2.jpg')} alt='metronic' />
+          <img src={PFP(user.pic === undefined?'':user.pic)} alt='metronic' />
         </div>
         <HeaderUserMenu />
         {/* end::Toggle */}

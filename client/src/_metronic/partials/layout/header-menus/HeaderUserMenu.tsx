@@ -4,6 +4,7 @@ import {shallowEqual, useSelector} from 'react-redux'
 import {Link} from 'react-router-dom'
 import {UserModel} from '../../../../app/modules/auth/models/UserModel'
 import {RootState} from '../../../../setup'
+import { PFP } from '../../../helpers'
 import {Languages} from './Languages'
 
 const HeaderUserMenu: FC = () => {
@@ -16,7 +17,7 @@ const HeaderUserMenu: FC = () => {
       <div className='menu-item px-3'>
         <div className='menu-content d-flex align-items-center px-3'>
           <div className='symbol symbol-50px me-5'>
-            <img alt='Logo' src={user.pic} />
+            <img alt='Logo' src={PFP(user.pic === undefined?'':user.pic)} />
           </div>
 
           <div className='d-flex flex-column'>

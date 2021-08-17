@@ -1,11 +1,10 @@
 import React, {useState} from 'react'
-import {toAbsoluteUrl} from '../../../../../../_metronic/helpers'
+import {PFP} from '../../../../../../_metronic/helpers'
 import {useSelector} from 'react-redux'
-// import {IProfileDetails} from '../SettingsModel'
 import * as Yup from 'yup'
 import {useFormik} from 'formik'
 import { UserModel } from '../../../../auth/models/UserModel'
-import {changeDetails} from '../../../../auth/redux/AuthCRUD'
+import {changeDetails, uploadAvatar} from '../../../../auth/redux/AuthCRUD'
 import * as auth from '../../../../auth/redux/AuthRedux'
 
 const initialValues = {
@@ -51,17 +50,47 @@ const ProfileDetails: React.FC = () => {
         console.log(values);
         changeDetails(values.email, values.firstname, values.lastname, values.zip, values.city, values.street, values.house_number, values.phone)
         .then(({data: {result}}) => {
-          console.log('Visszakaptam: ' + result);
-          setLoading(false);
+          //console.log('Visszakaptam: ' + result);         
+          setLoading(false);      
+          if(result){
+            window.location.reload();
+          }   
         }).catch((error) => {
           setLoading(false);
           console.log('Error');
         })
         const updatedData = Object.assign(data, values)
         setData(updatedData)
-      }, 1000)
+      }, 1000)     
     },
   })
+
+  function getBase64(file:File) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  function updateAvatar(avatar:File){
+    console.log('Avatar');
+    getBase64(avatar).then(
+      data => {
+        let base64 = JSON.stringify(data);
+        uploadAvatar(base64)
+        .then(({data: {result}}) => {
+          console.log('Visszakaptam: ' + result);            
+          if(result){
+            window.location.reload();
+          }   
+        }).catch((error) => {
+          console.log('Error: ' + error);
+        })
+      }
+    );
+  }
 
   return (
     <div className='card mb-5 mb-xl-10'>
@@ -81,24 +110,58 @@ const ProfileDetails: React.FC = () => {
       <div id='kt_account_profile_details' className='collapse show'>
         <form onSubmit={formik.handleSubmit} noValidate className='form'>
           <div className='card-body border-top p-9'>
-            <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label fw-bold fs-6'>Avatar</label>
+            
+          <div className='row mb-6'>
+              <label className='col-sm-2 col-form-label fw-bold fs-6'>Avatar</label>
               <div className='col-lg-8'>
-                <div
-                  className='image-input image-input-outline'
-                  data-kt-image-input='true'
-                  style={{backgroundImage: `url(${toAbsoluteUrl('/media/avatars/blank.png')})`}}
-                >
-                  <div
-                    className='image-input-wrapper w-125px h-125px'
-                    style={{backgroundImage: `url(${toAbsoluteUrl('/media/avatars/blank.png')})`}}
-                  ></div>
+
+                {/*begin::Image input*/}
+                <div className="image-input image-input-empty" data-kt-image-input="true" style={{backgroundImage: `url(${PFP(user.pic === undefined?'':user.pic)})`}}>
+                    {/*begin::Image preview wrapper*/}
+                    <div className="image-input-wrapper w-125px h-125px"></div>
+                    {/*end::Image preview wrapper*/}
+
+                    {/*begin::Edit button*/}
+                    <label className="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                        data-kt-image-input-action="change"
+                        data-bs-toggle="tooltip"
+                        data-bs-dismiss="click"
+                        title="Change avatar">
+                        <i className="bi bi-pencil-fill fs-7"></i>
+
+                        {/*begin::Inputs*/}
+                        <input type="file" name="avatar" onChange={ (e) => updateAvatar(e.target.files![0]) } accept=".png, .jpg, .jpeg" />
+                        <input type="hidden" name="avatar_remove" />
+                        {/*end::Inputs*/}
+                    </label>
+                    {/*end::Edit button*/}
+
+                    {/*begin::Cancel button*/}
+                    <span className="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                        data-kt-image-input-action="cancel"
+                        data-bs-toggle="tooltip"
+                        data-bs-dismiss="click"
+                        title="Cancel avatar">
+                        <i className="bi bi-x fs-2"></i>
+                    </span>
+                    {/*end::Cancel button*/}
+
+                    {/*begin::Remove button*/}
+                    <span className="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-white shadow"
+                        data-kt-image-input-action="remove"
+                        data-bs-toggle="tooltip"
+                        data-bs-dismiss="click"
+                        title="Remove avatar">
+                        <i className="bi bi-x fs-2"></i>
+                    </span>
+                    {/*end::Remove button*/}
                 </div>
+                {/*end::Image input*/}
               </div>
             </div>
 
             <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label  fw-bold fs-6'>Full Name</label>
+              <label className='col-sm-2 col-form-label  fw-bold fs-6'>Full Name</label>
 
               <div className='col-lg-8'>
                 <div className='row'>
@@ -134,7 +197,7 @@ const ProfileDetails: React.FC = () => {
             </div>
 
             <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label fw-bold fs-6'>
+              <label className='col-sm-2 col-form-label fw-bold fs-6'>
                 <span className=''>Phone</span>
               </label>
 
@@ -154,7 +217,7 @@ const ProfileDetails: React.FC = () => {
             </div>
 
             <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label fw-bold fs-6'>
+              <label className='col-sm-2 col-form-label fw-bold fs-6'>
                 <span className=''>Zip Code</span>
               </label>
 
@@ -174,7 +237,7 @@ const ProfileDetails: React.FC = () => {
             </div>
 
             <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label fw-bold fs-6'>
+              <label className='col-sm-2 col-form-label fw-bold fs-6'>
                 <span className=''>City</span>
               </label>
 
@@ -195,7 +258,7 @@ const ProfileDetails: React.FC = () => {
 
 
             <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label fw-bold fs-6'>
+              <label className='col-sm-2 col-form-label fw-bold fs-6'>
                 <span className=''>Street</span>
               </label>
 
@@ -215,7 +278,7 @@ const ProfileDetails: React.FC = () => {
             </div>
 
             <div className='row mb-6'>
-              <label className='col-lg-4 col-form-label fw-bold fs-6'>
+              <label className='col-sm-2 col-form-label fw-bold fs-6'>
                 <span className=''>House Number</span>
               </label>
 

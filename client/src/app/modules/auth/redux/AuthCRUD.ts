@@ -13,6 +13,8 @@ export const UPDATE_NOTIFICATIONS_URL = `${API_URL}/auth/update-notifications`
 export const GET_USERS_URL = `${API_URL}/auth/admin/get-users`
 export const USER_BLOCK_UNBLOCK = `${API_URL}/auth/admin/block-user`
 export const CHANGE_USER_DETAILS = `${API_URL}/auth/change-details`
+export const GET_USER_BY_EMAIL = `${API_URL}/auth/admin/get-user-by-email`
+export const UPDATE_AVATAR = `${API_URL}/auth/upload/avatar`
 
 // Server should return AuthModel
 export function login(email: string, password: string) {
@@ -84,7 +86,11 @@ export function userBlockUnblock(email:string) {
 }
 
 export function getUserByEmail(email:string) {
-  return axios.post<{user: UserModel}>(USER_BLOCK_UNBLOCK, {email})
+  return axios.post<{user: UserModel}>(GET_USER_BY_EMAIL, {email})
+}
+
+export function uploadAvatar(avatar:string) {
+  return axios.post<{result: boolean}>(UPDATE_AVATAR, {avatar})
 }
 
 export function getUserByToken() {

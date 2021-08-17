@@ -8,9 +8,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const fs = require('fs');
 
-/*LOGIN:
-
-*/
+//LOGIN:
 router.post('/login', (req, res) => {
     const { email, password} = req.body;
 
@@ -61,22 +59,15 @@ router.post('/login', (req, res) => {
     });
 });
 
-//email: string, firstname: string, lastname: string, password: string
 //Register
-router.get('/pfp', (req, res) => {
-    
-     
-    res.send(avatarData);
-});
-
 router.post('/register', (req, res) => {
     const {email, firstname, lastname, password, zip, city, street, house_number, phone} = req.body;
 
-    const avatarData = fs.readFileSync('./src/test.jpg', {encoding: 'base64'});
+    //Load Default Avatar
+    const avatarData = fs.readFileSync('./src/blank.png', {encoding: 'base64'});
 
     //Password Crypt
     const hash = bcrypt.hashSync(password, saltRounds); 
-    //console.log('HashedPassword2: ' + hash);
 
     //Define user for "cleaner" query
     let user = {email: email,
@@ -175,7 +166,7 @@ const verify = (req, res, next) =>{
             if(err){
                 return res.status(403).json("Token is invalid");
             }
-            console.log('Authorized');
+            // console.log('Authorized');
             req.user = user;
             next();
         });
@@ -186,9 +177,6 @@ const verify = (req, res, next) =>{
 
 //Send User Model
 router.get('/get-user', verify, (req, res) => {
-    // console.log("User: " + req.user.email);
-    // console.log("User: " + req.user.role);
-
     db.query('SELECT * FROM users WHERE email LIKE ?',req.user.email, (err, results) => {
         if(err){
             res.status(400).json('Query error');
@@ -211,7 +199,7 @@ router.get('/get-user', verify, (req, res) => {
                         res.json({
                             id: id,
                             username: last_name + " " + first_name,
-                            password: "no password for u",
+                            //password: "",
                             email: email,
                             firstname: first_name,
                             lastname: last_name,
@@ -233,8 +221,10 @@ router.get('/get-user', verify, (req, res) => {
     });   
 });
 
-router.get('/admin/get-user-by-email', verify, (req,res) => {
+router.post('/admin/get-user-by-email', verify, (req,res) => {
+    // console.log(req.user.role);
     if(req.user.role === 'admin'){
+        // console.log('Request body email: ' + req.body.email);
         db.query('SELECT * FROM users WHERE email LIKE ?',req.body.email, (err, results) => {
             if(err){
                 res.status(400).json('Query error');
@@ -254,10 +244,10 @@ router.get('/admin/get-user-by-email', verify, (req,res) => {
                             // console.log(communication);
                             // res.send(communication);
                             //console.log(Buffer.from(avatar, 'base64').toString('base64') === avatar);
-                            res.json({
+                            res.json({user:{
                                 id: id,
                                 username: last_name + " " + first_name,
-                                password: "no password for u",
+                                //password: "no password for u",
                                 email: email,
                                 firstname: first_name,
                                 lastname: last_name,
@@ -266,7 +256,7 @@ router.get('/admin/get-user-by-email', verify, (req,res) => {
                                 pic: avatar,
                                 address: {addressLine: zip + " " + city + " " + street + " " + house_number, city: city, state: city + ' megye', street: street, house_number: house_number, postCode: zip},
                                 communication: communications
-                            });
+                            }});
                             //console.log('Sent json');
                         }else{
                             console.log('Result is 0');
@@ -284,8 +274,8 @@ router.get('/admin/get-user-by-email', verify, (req,res) => {
 })
 
 router.post('/change-details', verify, (req, res) => {
-    console.log(req.user.email);
-    console.log(req.body);
+    // console.log(req.user.email);
+    // console.log(req.body);
     db.query('SELECT * FROM `users` WHERE email LIKE ?', [req.user.email], (err, results) => {
         if(err){
             console.log(err);
@@ -314,6 +304,20 @@ router.post('/change-details', verify, (req, res) => {
     });
 })
 
+router.post('/upload/avatar', verify, (req, res) => {
+    let cutBase64 = req.body.avatar.slice(req.body.avatar.indexOf(',')+1, req.body.avatar.length);
+    cutBase64 = cutBase64.slice(0, cutBase64.length-1);
+    db.query('UPDATE `users` SET avatar = ? WHERE email LIKE ?', [cutBase64, req.user.email], (err, results) => {
+        if(err){
+            console.log(err);
+            res.json({result: false});
+        }else{
+            // console.log(results);
+            res.json({result: true});
+        }
+    })   
+})
+
 router.get('/admin/get-users', verify, (req, res) => {
     if(req.user.role === 'admin'){       
         db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
@@ -324,7 +328,18 @@ router.get('/admin/get-users', verify, (req, res) => {
             }else{
                 let users = [];
                 results.map(r => {
-                    users.push({id: r.id, email: r.email, firstname: r.first_name, lastname: r.last_name, pic: r.avatar, phone: r.phone, blacklisted: (r.BlackListEmail === null ? 0:1)});
+                    users.push({id: r.id, 
+                        email: r.email, 
+                        firstname: r.first_name, 
+                        lastname: r.last_name, 
+                        pic: r.avatar, 
+                        phone: r.phone, 
+                        blacklisted: (r.BlackListEmail === null ? 0:1),
+                        zip: r.zip,
+                        city: r.city,
+                        street: r.street,
+                        house_number: r.house_number,
+                    });
                 })
                 //console.log(users);
                 res.json({users: users});

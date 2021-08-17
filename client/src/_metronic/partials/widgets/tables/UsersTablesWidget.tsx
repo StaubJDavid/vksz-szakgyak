@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, {useState, useEffect} from 'react'
-import {KTSVG, toAbsoluteUrl} from '../../../helpers'
+import { useHistory } from 'react-router-dom';
+import {KTSVG, PFP} from '../../../helpers'
 import {UserModel} from '../../../../app/modules/auth/models/UserModel'
 import {getUsers, userBlockUnblock} from '../../../../app/modules/auth/redux/AuthCRUD'
 
@@ -17,6 +18,7 @@ function onBlockClick(email:string){
 }
 
 const UsersTablesWidget: React.FC<Props> = ({className}) => {
+  let history = useHistory();
   const [users, setData] = useState<UserModel[]>([]);
   useEffect(() => {
       const Users = async () => {
@@ -31,6 +33,15 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
   
       Users()
     }, []);
+
+  function onEmailClick(email:string){
+    console.log('Clicked');
+    let index = users.findIndex((element:UserModel) => element.email === email);
+    console.log(users[index]);
+    history.push({
+      pathname: `/user/${users[index].email}`
+    })
+  }
 
   function updateData(user:UserModel){
     let index = users.findIndex((element:UserModel) => element.email === user.email)
@@ -49,23 +60,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
           <span className='card-label fw-bolder fs-3 mb-1'>Felhasználók</span>
           {/*<span className='text-muted mt-1 fw-bold fs-7'>Over 500 members</span>*/}
         </h3>
-        <div
-          className='card-toolbar'
-          data-bs-toggle='tooltip'
-          data-bs-placement='top'
-          data-bs-trigger='hover'
-          title='Click to add a user'
-        >
-          <a
-            href='#'
-            className='btn btn-sm btn-light-primary'
-            // data-bs-toggle='modal'
-            // data-bs-target='#kt_modal_invite_friends'
-          >
-            <KTSVG path='media/icons/duotone/Communication/Add-user.svg' className='svg-icon-3' />
-            New Member
-          </a>
-        </div>
+        
       </div>
       {/* end::Header */}
       {/* begin::Body */}
@@ -77,17 +72,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
             {/* begin::Table head */}
             <thead>
               <tr className='fw-bolder text-muted'>
-                <th className='w-25px'>
-                  <div className='form-check form-check-sm form-check-custom form-check-solid'>
-                    <input
-                      className='form-check-input'
-                      type='checkbox'
-                      value='1'
-                      data-kt-check='true'
-                      data-kt-check-target='.widget-9-check'
-                    />
-                  </div>
-                </th>
+                <th className='w-25px'>{/*The checkbox was here*/}</th>
                 <th className='min-w-150px'>User</th>
                 <th className='min-w-140px'>Email</th>
                 <th className='min-w-120px'>Phone</th>
@@ -108,7 +93,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                 <td>
                   <div className='d-flex align-items-center'>
                     <div className='symbol symbol-45px me-5'>
-                      <img src={toAbsoluteUrl('/media/avatars/150-11.jpg')} alt='' />
+                      <img src={PFP(u.pic === undefined?'':u.pic)} alt='' />
                     </div>
                     <div className='text-dark fw-bolder fs-6 d-flex justify-content-start flex-column'>                      
                         {u.lastname} {u.firstname}
@@ -116,7 +101,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                   </div>
                 </td>
                 <td>
-                  <a key={u.email} href='#' className='text-dark fw-bolder text-hover-primary d-block fs-6'>
+                  <a key={u.email} href='#' className='text-dark fw-bolder text-hover-primary d-block fs-6' onClick={() => {onEmailClick(u.email);}}>
                     {u.email}
                   </a>
                 </td>

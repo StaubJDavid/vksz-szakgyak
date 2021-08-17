@@ -3,13 +3,18 @@ import {MenuItem} from './MenuItem'
 import {MenuInnerWithSub} from './MenuInnerWithSub'
 import {MegaMenu} from './MegaMenu'
 import {useIntl} from 'react-intl'
+import { GetRole } from '../../../helpers/components/UserRole'
 
 export function MenuInner() {
   const intl = useIntl()
   return (
     <>
+      {/* DASHBOARD */}
       <MenuItem title={intl.formatMessage({id: 'MENU.DASHBOARD'})} to='/dashboard' />
+      {/* LAYOUT BUILDER */}
       <MenuItem title='Layout Builder' to='/builder' />
+
+      {/* CRAFTED */}
       <MenuInnerWithSub
         title='Crafted'
         to='/crafted'
@@ -99,7 +104,7 @@ export function MenuInner() {
           <MenuItem to='/crafted/widgets/feeds' title='Feeds' hasBullet={true} />
         </MenuInnerWithSub>
       </MenuInnerWithSub>
-
+      {/* APPS */}
       <MenuInnerWithSub title='Apps' to='/apps' menuPlacement='bottom-start' menuTrigger='click'>
         {/* PAGES */}
         <MenuInnerWithSub
@@ -115,6 +120,7 @@ export function MenuInner() {
           <MenuItem to='/apps/chat/drawer-chat' title='Drawer Chart' hasBullet={true} />
         </MenuInnerWithSub>
       </MenuInnerWithSub>
+      {/* MEGA MENU */}
       <MenuInnerWithSub
         isMega={true}
         title='Mega menu'
@@ -124,6 +130,8 @@ export function MenuInner() {
       >
         <MegaMenu />
       </MenuInnerWithSub>
+      {/* ADMIN BOARD */}
+      {GetRole() === 'admin'?<MenuItem title='Admin Dashboard' to='/admin-board' />:<></>}
     </>
   )
 }
