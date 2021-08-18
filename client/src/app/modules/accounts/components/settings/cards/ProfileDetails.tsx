@@ -39,6 +39,8 @@ const ProfileDetails: React.FC = () => {
     const updatedData = Object.assign(data, fieldsToUpdate)
     setData(updatedData)
   }
+  
+  const [profileError, setProfileError] = useState('');
 
   const [loading, setLoading] = useState(false)
   const formik = useFormik<UserModel>({
@@ -51,13 +53,14 @@ const ProfileDetails: React.FC = () => {
         changeDetails(values.email, values.firstname, values.lastname, values.zip, values.city, values.street, values.house_number, values.phone)
         .then(({data: {result}}) => {
           //console.log('Visszakaptam: ' + result);         
-          setLoading(false);      
-          if(result){
+          setLoading(false);         
+          setProfileError('');      
+          if(result === true){
             window.location.reload();
           }   
         }).catch((error) => {
           setLoading(false);
-          console.log('Error');
+          setProfileError(error.response.data);
         })
         const updatedData = Object.assign(data, values)
         setData(updatedData)
@@ -300,6 +303,12 @@ const ProfileDetails: React.FC = () => {
           </div>
 
           <div className='card-footer d-flex justify-content-end py-6 px-9'>
+            {profileError !== '' && (
+              <div className='alert alert-danger justify-content-start'>
+                <div className='alert-text font-weight-bold'>{profileError}</div>
+              </div>
+            )}
+
             <button type='submit' className='btn btn-primary' disabled={loading}>
               {!loading && 'Save Changes'}
               {loading && (

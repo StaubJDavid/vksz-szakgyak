@@ -11,6 +11,7 @@ router.post('/get-user-by-email', verify, (req,res) => {
         // console.log('Request body email: ' + req.body.email);
         db.query('SELECT * FROM users WHERE email LIKE ?',req.body.email, (err, results) => {
             if(err){
+                console.log(err);
                 res.status(400).json('Query error');
             }else{
                 const {id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
@@ -18,7 +19,7 @@ router.post('/get-user-by-email', verify, (req,res) => {
                 db.query('SELECT * FROM `user_notifs` WHERE email LIKE ?', email, (err1, results1) => {
                     if(err1){
                         console.log(err1);
-                        res.send(err1);
+                        res.status(400).json('Query error1');
                     }else{
                         if(results1.length !== 0){
                             let communications = [];
@@ -43,17 +44,16 @@ router.post('/get-user-by-email', verify, (req,res) => {
                             }});
                             //console.log('Sent json');
                         }else{
-                            console.log('Result is 0');
-                            res.send('Result is 0');
+                            console.log('There\'s no such user');
+                            res.status(400).json('There\'s no such user');
                         }           
                     }
-                });
-                //res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});           
+                });      
             }        
         }); 
     }else{
-        console.log('Nem admin');
-        res.end('No result');
+        console.log('You don\'t have the permission for this');
+        res.status(400).json('You don\'t have the permission for this');
     }
 });
 
@@ -85,8 +85,7 @@ router.get('/get-users', verify, (req, res) => {
             }
         })
     }else{
-        console.log('Nem admin');
-        res.json({result: false});
+        // console.log('Nem admin');
     }
 });
 

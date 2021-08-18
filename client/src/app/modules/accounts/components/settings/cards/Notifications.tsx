@@ -26,17 +26,19 @@ const Notifications: React.FC = () => {
     // console.log('New data: ' + JSON.stringify(data))
   }
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [notifError, setNotifError] = useState('');
 
   const click = () => {
     setLoading(true)
     setTimeout(() => {
       updateNotifications(data).then(({data: {result}}) => {
         setLoading(false);
-        console.log('Visszakaptam: ' + result);
+        setNotifError('');
+        //console.log('Visszakaptam: ' + result);
       }).catch((error) => {
         setLoading(false);
-        console.log('Error');
+        setNotifError(error.response.data);
       })
       
     }, 1000)
@@ -45,6 +47,13 @@ const Notifications: React.FC = () => {
   
 
   return (
+    <>
+    {notifError !== '' && (
+        <div className='mb-lg-15 alert alert-danger'>
+          <div className='alert-text font-weight-bold'>{notifError}</div>
+        </div>
+      )}
+
     <div className='card mb-5 mb-xl-10'>
       <div
         className='card-header border-0 cursor-pointer'
@@ -69,7 +78,7 @@ const Notifications: React.FC = () => {
 
                   {/* begin::First Row begin */}
                   {data.map((c:UserCommunicationModel) => (
-                    <tr>
+                    <tr key={c.name}>
                     <td className='min-w-250px fs-4 fw-bolder'>{c.name}</td>
                     {/* begin::Email box start */}
                     <td className='w-125px'>
@@ -353,6 +362,7 @@ const Notifications: React.FC = () => {
         </form>
       </div>
     </div>
+    </>
   )
 }
 

@@ -46,10 +46,11 @@ export function Login() {
             setLoading(false)
             dispatch(auth.actions.login(accessToken))
           })
-          .catch(() => {
-            setLoading(false)
-            setSubmitting(false)
-            setStatus('The login detail is incorrect')
+          .catch((error) => {
+            setLoading(false);
+            setSubmitting(false);
+            console.log(error);
+            setStatus(error.response.data);
           })
       }, 1000)
     },

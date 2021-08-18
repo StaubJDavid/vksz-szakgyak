@@ -84,7 +84,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
             <tbody>
               {/* begin::Table row */}
               {users.map((u:UserModel) => (
-                <tr style={{backgroundColor: u.blacklisted ? '#dc3545' : 'white'}}>
+                <tr key={u.id} style={{backgroundColor: u.blacklisted ? '#dc3545' : 'white'}}>
                 <td>
                   {/*<div className='form-check form-check-sm form-check-custom form-check-solid'>
                     <input className='form-check-input widget-9-check' type='checkbox' value='1' />
@@ -101,7 +101,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                   </div>
                 </td>
                 <td>
-                  <a key={u.email} href='#' className='text-dark fw-bolder text-hover-primary d-block fs-6' onClick={() => {onEmailClick(u.email);}}>
+                  <a href='#' className='text-dark fw-bolder text-hover-primary d-block fs-6' onClick={() => {onEmailClick(u.email);}}>
                     {u.email}
                   </a>
                 </td>
@@ -112,8 +112,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                 </td>
                 <td>
                   <div className='d-flex justify-content-center flex-shrink-0'>                   
-                    <a
-                      key={u.email}                     
+                    <a                   
                       href='#'
                       onClick={() => {onBlockClick(u.email); updateData({id: u.id, email: u.email, firstname: u.firstname, lastname: u.lastname, phone: u.phone, blacklisted: u.blacklisted? 0:1})}}
                       className='btn btn-icon btn-bg-light btn-active-color-primary btn-sm'

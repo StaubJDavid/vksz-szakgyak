@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const db= require('./database/db');
+const db = require('./database/db');
 const fs = require('fs');
 
 require('dotenv').config();
@@ -28,6 +28,7 @@ app.get('/query', (req, res) => {
 
 });
 
+/*
 app.get('/createdb', (req, res) => {
     let sql = 'CREATE TABLE IF NOT EXISTS `users` (' +
         '`id` INT NOT NULL AUTO_INCREMENT,' +
@@ -117,7 +118,7 @@ app.get('/createdb', (req, res) => {
         }        
     });
     res.send('DB Check log');
-});
+});*/
 
 app.listen(process.env.PORT, () =>{
     console.log(`Listening to ${process.env.PORT}`);

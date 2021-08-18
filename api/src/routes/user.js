@@ -7,10 +7,11 @@ const verify = require('../helpers/authVerify');
 router.post('/change-details', verify, (req, res) => {
     // console.log(req.user.email);
     // console.log(req.body);
+
     db.query('SELECT * FROM `users` WHERE email LIKE ?', [req.user.email], (err, results) => {
         if(err){
             console.log(err);
-            res.json({result: false});
+            res.status(400).json('Wrong ProfileDetails change');
         }else{
             //console.log(req.body.firstname === '' ? results[0].first_name:req.body.firstname);
             db.query('UPDATE `users` SET first_name = ? , last_name = ? , zip = ? , city = ? , street = ? , house_number = ? , phone = ? WHERE email LIKE ?', [
@@ -25,7 +26,7 @@ router.post('/change-details', verify, (req, res) => {
             ], (err1, results1) => {
                 if(err){
                     console.log(err1);
-                    res.json({result: false});
+                    res.status(400).json('Wrong ProfileDetails change');
                 }else{
                     //console.log(results1);
                     res.json({result: true})
@@ -41,7 +42,7 @@ router.post('/update/avatar', verify, (req, res) => {
     db.query('UPDATE `users` SET avatar = ? WHERE email LIKE ?', [cutBase64, req.user.email], (err, results) => {
         if(err){
             console.log(err);
-            res.json({result: false});
+            res.status(400).json('There is a problem with updating the avatar');
         }else{
             // console.log(results);
             res.json({result: true});
@@ -57,7 +58,7 @@ router.put('/update-notifications', verify, (req,res) => {
                 (err, results) => {
                     if(err){
                         console.log(err);
-                        res.json({result: false});
+                        res.status(400).json('Wrong query');
                     }{
                         count++;
                         if(count === req.body.notifications.length){
@@ -66,7 +67,7 @@ router.put('/update-notifications', verify, (req,res) => {
                     }
                 }
         )
-    });   
+    }); 
 });
 
 router.post('/forgot-password', (req, res) => {

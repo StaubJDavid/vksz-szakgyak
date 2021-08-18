@@ -1,10 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-require('dotenv').config({ path: '../../.env' });
 
 const verify = (req, res, next) =>{
     const authHeader = req.headers.authorization;
-    console.log(process.env.SECRET_KEY);
     if(authHeader){
         //authHeader: "Bearer ..."
         //Remove the Bearer part
@@ -13,7 +11,6 @@ const verify = (req, res, next) =>{
             if(err){
                 return res.status(403).json("Token is invalid");
             }
-            console.log('Authorized');
             req.user = user;
             next();
         });

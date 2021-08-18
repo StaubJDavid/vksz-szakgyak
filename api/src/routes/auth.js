@@ -41,18 +41,16 @@ router.post('/login', (req, res) => {
                 if(results.length === 0){
                     console.log("No Email found");
                     res.status(400).json('No registered email found');
+                }else if(results[0].BlackListEmail !== null){
+                    console.log("Email blacklisted?");
+                    res.status(400).json('Email blacklisted');
                 }
 
                 if(results.length > 1){
                     console.log("More Email found?");
                     res.status(400).json('More Email found');
                 }
-
-                if(results[0].BlackListEmail !== null){
-                    console.log("Email blacklisted?");
-                    res.status(400).json('Email blacklisted');
-                }
-                
+          
             }            
         }
     });
@@ -63,7 +61,7 @@ router.post('/register', (req, res) => {
     const {email, firstname, lastname, password, zip, city, street, house_number, phone} = req.body;
 
     //Load Default Avatar
-    const avatarData = fs.readFileSync('./media/blank.png', {encoding: 'base64'});
+    const avatarData = fs.readFileSync('./src/media/blank.png', {encoding: 'base64'});
 
     //Password Crypt
     const hash = bcrypt.hashSync(password, saltRounds); 
@@ -87,7 +85,7 @@ router.post('/register', (req, res) => {
     db.query('SELECT * FROM `blacklist` WHERE email LIKE ?', [email], (err1, results1) => {
         if(err1){
             console.log(err1);
-            res.status(400).end();
+            res.status(400).json('Wrong query1');
         }else{
             if(results1.length === 1){
                 blacklisted = 1;
@@ -96,7 +94,7 @@ router.post('/register', (req, res) => {
             db.query('SELECT * FROM `users` WHERE email LIKE ?', [email], (err2, results2) => {
                 if(err2){
                     console.log(err2);
-                    res.status(400).end();
+                    res.status(400).json('Wrong query2');
                 }else{
                     //Check if registered before and if blacklisted
                     if(results2.length === 0 && blacklisted === 0){
@@ -104,13 +102,14 @@ router.post('/register', (req, res) => {
                         db.query('INSERT INTO users SET ?', user, (err3, results3) => {
                             if(err3){
                                 console.log(err3);
-                                res.status(400).end();
+                                res.status(400).json('Wrong query3');
                             }else{
 
                                 //Get all of the news services 
                                 db.query('SELECT * FROM `news_services`', (err4, results4) => {
                                     if(err4){
                                         console.log(err4);
+                                        res.status(400).json('Wrong query4');
                                     }else{
                                         //Make the notifications populating query
                                         let sql = 'INSERT INTO `user_notifs` (email, service_name) VALUES ';
@@ -124,7 +123,7 @@ router.post('/register', (req, res) => {
                                         db.query(str1, (err5, results5) => {
                                             if(err5){
                                                 console.log(err5);
-                                                res.status(400).end();
+                                                res.status(400).json('Wrong query5');
                                             }else{
                                                 //Everything is good, inserted user to users table, inserted default user notifications into user_notifs
                                                 //Create a JWT with current user email, and role user
@@ -158,6 +157,7 @@ router.post('/register', (req, res) => {
 router.get('/get-user', verify, (req, res) => {
     db.query('SELECT * FROM users WHERE email LIKE ?',req.user.email, (err, results) => {
         if(err){
+            console.log(err);
             res.status(400).json('Query error');
         }else{
             const {id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
@@ -165,7 +165,7 @@ router.get('/get-user', verify, (req, res) => {
             db.query('SELECT * FROM `user_notifs` WHERE email LIKE ?', email, (err1, results1) => {
                 if(err1){
                     console.log(err1);
-                    res.send(err1);
+                    res.status(400).json('Query error1');
                 }else{
                     if(results1.length !== 0){
                         let communications = [];
@@ -190,12 +190,11 @@ router.get('/get-user', verify, (req, res) => {
                         });
                         //console.log('Sent json');
                     }else{
-                        console.log('Not Good');
-                        res.send('Not Good');
+                        console.log('No notifications available for this user');
+                        res.status(400).json('No notifications available for this user: ' + email);
                     }           
                 }
-            });
-            //res.json({id: id, username: `${last_name} ${first_name}`, password: pw_hash, email: email, firstname: first_name,lastname: last_name});           
+            });  
         }        
     });   
 });

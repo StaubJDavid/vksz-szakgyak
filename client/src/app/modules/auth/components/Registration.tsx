@@ -97,12 +97,8 @@ export function Registration() {
           .catch((error) => {
             //console.log(error.response.status);
             setLoading(false)
-            setSubmitting(false)           
-            if(error.response.status === 400){               
-              setStatus('Email is already in use')
-            }else{
-              setStatus('Registration process has broken')
-            }          
+            setSubmitting(false)
+            setStatus(error.response.data);         
           })
       }, 1000)
     },
