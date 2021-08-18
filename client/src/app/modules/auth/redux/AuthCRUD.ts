@@ -5,16 +5,21 @@ import {UserModel} from '../models/UserModel'
 
 const API_URL = process.env.REACT_APP_API_URL || 'localhost:3001'
 
-export const GET_USER_BY_ACCESSTOKEN_URL = `${API_URL}/auth/get-user`
-export const LOGIN_URL = `${API_URL}/auth/login`
-export const REGISTER_URL = `${API_URL}/auth/register`
-export const REQUEST_PASSWORD_URL = `${API_URL}/auth/forgot-password`
-export const UPDATE_NOTIFICATIONS_URL = `${API_URL}/auth/update-notifications`
-export const GET_USERS_URL = `${API_URL}/auth/admin/get-users`
-export const USER_BLOCK_UNBLOCK = `${API_URL}/auth/admin/block-user`
-export const CHANGE_USER_DETAILS = `${API_URL}/auth/change-details`
-export const GET_USER_BY_EMAIL = `${API_URL}/auth/admin/get-user-by-email`
-export const UPDATE_AVATAR = `${API_URL}/auth/upload/avatar`
+//AUTHENTICATION
+export const GET_USER_BY_ACCESSTOKEN_URL = `${API_URL}/api/auth/get-user`
+export const LOGIN_URL = `${API_URL}/api/auth/login`
+export const REGISTER_URL = `${API_URL}/api/auth/register`
+
+//USER STUFF
+export const REQUEST_PASSWORD_URL = `${API_URL}/api/user/forgot-password`
+export const UPDATE_NOTIFICATIONS_URL = `${API_URL}/api/user/update-notifications`
+export const CHANGE_USER_DETAILS = `${API_URL}/api/user/change-details`
+export const UPDATE_AVATAR = `${API_URL}/api/user/update/avatar`
+
+//ADMIN STUFF
+export const GET_USER_BY_EMAIL = `${API_URL}/api/admin/get-user-by-email`
+export const GET_USERS_URL = `${API_URL}/api/admin/get-users`
+export const USER_BLOCK_UNBLOCK = `${API_URL}/api/admin/block-user`
 
 // Server should return AuthModel
 export function login(email: string, password: string) {
