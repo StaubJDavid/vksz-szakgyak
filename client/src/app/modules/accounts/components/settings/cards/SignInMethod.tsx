@@ -311,7 +311,7 @@ const SignInMethod: React.FC = () => {
             </div>
           </div>
 
-          <div className='notice d-flex bg-light-primary rounded border-primary border border-dashed p-6'>
+          {/* <div className='notice d-flex bg-light-primary rounded border-primary border border-dashed p-6'>
             <KTSVG
               path='/media/icons/duotone/General/Shield-check.svg'
               className='svg-icon-2tx svg-icon-primary me-4'
@@ -333,7 +333,7 @@ const SignInMethod: React.FC = () => {
                 Enable
               </a>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

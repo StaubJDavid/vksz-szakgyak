@@ -86,12 +86,12 @@ export function getUsers() {
   return axios.get<{users: UserModel[]}>(GET_USERS_URL)
 }
 
-export function userBlockUnblock(email:string) {
-  return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {email})
+export function userBlockUnblock(id:number, email:string) {
+  return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {id, email})
 }
 
-export function getUserByEmail(email:string) {
-  return axios.post<{user: UserModel}>(GET_USER_BY_EMAIL, {email})
+export function getUserByEmail(id:number) {
+  return axios.post<{user: UserModel}>(GET_USER_BY_EMAIL, {id})
 }
 
 export function uploadAvatar(avatar:string) {

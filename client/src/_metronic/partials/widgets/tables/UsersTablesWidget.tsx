@@ -9,8 +9,9 @@ type Props = {
   className: string
 }
 
-function onBlockClick(email:string){
-  userBlockUnblock(email).then(({data: {result}}) => {
+function onBlockClick(id:number, email:string){
+  console.log(id);
+  userBlockUnblock(id,email).then(({data: {result}}) => {
     console.log('Visszakaptam: ' + result);   
   }).catch((error) => {
     console.log('Error');
@@ -34,12 +35,12 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
       Users()
     }, []);
 
-  function onEmailClick(email:string){
+  function onEmailClick(id:number){
     console.log('Clicked');
-    let index = users.findIndex((element:UserModel) => element.email === email);
+    let index = users.findIndex((element:UserModel) => element.id === id);
     console.log(users[index]);
     history.push({
-      pathname: `/user/${users[index].email}`
+      pathname: `/user/${users[index].id}`
     })
   }
 
@@ -101,7 +102,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                   </div>
                 </td>
                 <td>
-                  <a href='#' className='text-dark fw-bolder text-hover-primary d-block fs-6' onClick={() => {onEmailClick(u.email);}}>
+                  <a href='#' className='text-dark fw-bolder text-hover-primary d-block fs-6' onClick={() => {onEmailClick(u.id);}}>
                     {u.email}
                   </a>
                 </td>
@@ -114,7 +115,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                   <div className='d-flex justify-content-center flex-shrink-0'>                   
                     <a                   
                       href='#'
-                      onClick={() => {onBlockClick(u.email); updateData({id: u.id, email: u.email, firstname: u.firstname, lastname: u.lastname, phone: u.phone, blacklisted: u.blacklisted? 0:1})}}
+                      onClick={() => {onBlockClick(u.id, u.email); updateData({id: u.id, email: u.email, firstname: u.firstname, lastname: u.lastname, phone: u.phone, blacklisted: u.blacklisted? 0:1})}}
                       className='btn btn-icon btn-bg-light btn-active-color-primary btn-sm'
                     >
                       <KTSVG path='/media/icons/duotone/General/Trash.svg' className='svg-icon-3' />

@@ -25,7 +25,8 @@ router.post('/login', (req, res) => {
                 //const dbPassHash = results[0].pw_hash;
                 if(userEmail === email && bcrypt.compareSync(password, results[0].pw_hash)){
                     //Generate webtoken
-                    const accessToken = jwt.sign({ email: userEmail, role: results[0].role},
+                    console.log('Generating webtoken with id: ' + results[0].user_id);
+                    const accessToken = jwt.sign({ email: userEmail, role: results[0].role, id: results[0].user_id},
                             process.env.SECRET_KEY,
                             {expiresIn: "10m"}
                         );
@@ -104,7 +105,7 @@ router.post('/register', (req, res) => {
                                 console.log(err3);
                                 res.status(400).json('Wrong query3');
                             }else{
-
+                                console.log('InsertedID: ' + results3.insertId);
                                 //Get all of the news services 
                                 db.query('SELECT * FROM `news_services`', (err4, results4) => {
                                     if(err4){
@@ -112,12 +113,12 @@ router.post('/register', (req, res) => {
                                         res.status(400).json('Wrong query4');
                                     }else{
                                         //Make the notifications populating query
-                                        let sql = 'INSERT INTO `user_notifs` (email, service_name) VALUES ';
                                         results4.map(r => {
-                                            sql += `('${email}', '${r.service_name}'),`;
+                                            sql += `(${results3.insertId}, ${r.service_id}),`;
                                         });
+                                        // console.log(sql);
                                         var str1 = sql.replace(/,$/,";");
-                                        //console.log(str1);
+                                        // console.log(str1);
 
                                         //Execute the notifications populating query
                                         db.query(str1, (err5, results5) => {
@@ -127,7 +128,7 @@ router.post('/register', (req, res) => {
                                             }else{
                                                 //Everything is good, inserted user to users table, inserted default user notifications into user_notifs
                                                 //Create a JWT with current user email, and role user
-                                                const accessToken = jwt.sign({ email: email, role: "user"},
+                                                const accessToken = jwt.sign({ email: email, role: "user", id: results3.insertId},
                                                     process.env.SECRET_KEY,
                                                     {expiresIn: "2m"}
                                                 );
@@ -155,14 +156,15 @@ router.post('/register', (req, res) => {
 
 //Send User Model
 router.get('/get-user', verify, (req, res) => {
-    db.query('SELECT * FROM users WHERE email LIKE ?',req.user.email, (err, results) => {
+    // console.log('UserID:' + req.user.id);
+    db.query('SELECT * FROM users WHERE user_id = ?',req.user.id, (err, results) => {
         if(err){
             console.log(err);
             res.status(400).json('Query error');
         }else{
-            const {id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
+            const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
 
-            db.query('SELECT * FROM `user_notifs` WHERE email LIKE ?', email, (err1, results1) => {
+            db.query('SELECT * FROM `user_notifs` un LEFT JOIN `news_services` ns ON un.service_id = ns.service_id  WHERE un.user_id = ?', [req.user.id], (err1, results1) => {
                 if(err1){
                     console.log(err1);
                     res.status(400).json('Query error1');
@@ -170,13 +172,13 @@ router.get('/get-user', verify, (req, res) => {
                     if(results1.length !== 0){
                         let communications = [];
                         results1.map(r => {
-                            communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up});
+                            communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up, service_id: r.service_id});
                         });
                         // console.log(communication);
                         // res.send(communication);
                         //console.log(Buffer.from(avatar, 'base64').toString('base64') === avatar);
                         res.json({
-                            id: id,
+                            id: user_id,
                             username: last_name + " " + first_name,
                             //password: "",
                             email: email,

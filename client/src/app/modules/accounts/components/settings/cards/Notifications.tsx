@@ -13,11 +13,7 @@ const Notifications: React.FC = () => {
   const [data, setData] = useState<UserCommunicationModel[]>(user.communication)
 
   const updateData = (fieldsToUpdate: UserCommunicationModel) => {
-    // let found:UserCommunicationModel = user.communication.find((element:UserCommunicationModel) => element.name === fieldsToUpdate.name);
-    let index = user.communication.findIndex((element:UserCommunicationModel) => element.name === fieldsToUpdate.name)
-    // console.log('Found: ' + found.name + ' Email: ' + found.email + ' sms: ' +  found.sms + ' phone: ' +  found.phone);
-    // console.log('Field: ' + fieldsToUpdate.name + ' Email: ' + fieldsToUpdate.email + ' sms: ' +  fieldsToUpdate.sms + ' phone: ' +  fieldsToUpdate.phone);
-    // console.log('Index: ' + index);
+    let index = user.communication.findIndex((element:UserCommunicationModel) => element.service_id === fieldsToUpdate.service_id)
     
     setData([ ...data.slice(0,index),
               Object.assign({}, data[index], fieldsToUpdate),
@@ -78,7 +74,7 @@ const Notifications: React.FC = () => {
 
                   {/* begin::First Row begin */}
                   {data.map((c:UserCommunicationModel) => (
-                    <tr key={c.name}>
+                    <tr key={c.service_id}>
                     <td className='min-w-250px fs-4 fw-bolder'>{c.name}</td>
                     {/* begin::Email box start */}
                     <td className='w-125px'>
@@ -95,6 +91,7 @@ const Notifications: React.FC = () => {
                                 phone: c.phone,
                                 sms: c.sms,
                                 email: !c.email,
+                                service_id: c.service_id
                             })
                           }
                         />
@@ -123,6 +120,7 @@ const Notifications: React.FC = () => {
                               phone: c.phone,
                               sms: !c.sms,
                               email: c.email,
+                              service_id: c.service_id
                           })
                           }
                         />
@@ -151,6 +149,7 @@ const Notifications: React.FC = () => {
                               phone: !c.phone,
                               sms: c.sms,
                               email: c.email,
+                              service_id: c.service_id
                           })
                           }
                         />

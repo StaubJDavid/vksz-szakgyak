@@ -13,7 +13,7 @@ const UserProfile: FC = () => {
   useEffect(() => {
       const User = async () => {
         try {
-          const response = await getUserByEmail(pathString.slice(6,pathString.length).toString());
+          const response = await getUserByEmail(parseInt(pathString.slice(6,pathString.length), 10));
           setData(response.data.user);
         } catch (error) {
           console.log(error)
@@ -51,6 +51,15 @@ const UserProfile: FC = () => {
               <img src={PFP(user?.pic === undefined?'':user?.pic)} alt='Metronic' />
               <div className='position-absolute translate-middle bottom-0 start-100 mb-6 bg-success rounded-circle border border-4 border-white h-20px w-20px'></div>
             </div>
+          </div>
+        </div>
+
+        {/*UserId*/}
+        <div className='row mb-7'>
+          <label className='col-lg-4 fw-bold text-muted'>User Id</label>
+
+          <div className='col-lg-8'>
+            <span className='fw-bolder fs-6 text-dark'>{user?.id}</span>
           </div>
         </div>
 

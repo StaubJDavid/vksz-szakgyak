@@ -8,6 +8,7 @@ import {changeDetails, uploadAvatar} from '../../../../auth/redux/AuthCRUD'
 import * as auth from '../../../../auth/redux/AuthRedux'
 
 const initialValues = {
+  id: 0,
   email:'',
   firstname: '',
   lastname: '',

@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const db = require('./database/db');
 const fs = require('fs');
+var nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt');
 
 require('dotenv').config();
 
@@ -24,14 +26,55 @@ app.get('/', (req, res) => {
 
 //Helpers/Tests
 
-app.get('/query', (req, res) => {
-
+app.get('/insert', (req, res) => {
+    db.query("INSERT INTO `users`(`email`, `last_name`, `first_name`, `pw_hash`, `zip`, `city`, `street`, `house_number`, `phone`, `role`) " + 
+        "VALUES ('email','last_name','first_name','pw_hash','zip','city','street','house_number','phone','admin')", (err, result) => {
+            if(err){
+                console.log(err);
+                res.send(err);
+            }else{
+                console.log(result.insertId);
+                res.send({id: result.insertId});
+            }
+        })
+ 
 });
 
-/*
+app.get('/email', (req, res) => {
+
+    // https://ethereal.email/create
+  // create reusable transporter object using the default SMTP transport
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    auth: {
+        user: 'isabella.daugherty58@ethereal.email',
+        pass: 'bCMKFutjxc9MVXxe77'
+    }
+});
+
+  var mailOptions = {
+    from: 'isabella.daugherty58@ethereal.email',
+    to: 'davidkah20@gmail.com',
+    subject: 'Hello ✔',
+    text: 'Hello world?',
+    html: "<b>Hello world?</b>"
+  };
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+      res.send(mailOptions);
+    }
+  }); 
+});
+
+
 app.get('/createdb', (req, res) => {
     let sql = 'CREATE TABLE IF NOT EXISTS `users` (' +
-        '`id` INT NOT NULL AUTO_INCREMENT,' +
+        '`user_id` INT NOT NULL AUTO_INCREMENT,' +
         '`email` VARCHAR(255),' +
         '`last_name` VARCHAR(255),' +
         '`first_name` VARCHAR(20),' +
@@ -42,8 +85,9 @@ app.get('/createdb', (req, res) => {
         '`house_number` VARCHAR(20),' +
         '`phone` VARCHAR(20),' +
         '`role` ENUM(\'user\', \'admin\'),' +
-        '`avatar` MEDIUMBLOB,' +
-        'PRIMARY KEY (`id`)' +
+        '`confirmed` BOOLEAN DEFAULT 0,' +
+        '`avatar` MEDIUMBLOB,' +       
+        'PRIMARY KEY (`user_id`)' +
     ');';
 
     db.query(sql, (err, result) =>{
@@ -86,9 +130,9 @@ app.get('/createdb', (req, res) => {
 
     //Blacklist Table
     sql = 'CREATE TABLE IF NOT EXISTS `blacklist` (' +
-        '`id` INT NOT NULL AUTO_INCREMENT,' +
+        '`blacklist_id` INT NOT NULL AUTO_INCREMENT,' +
         '`email` VARCHAR(255),' +
-        'PRIMARY KEY (`id`)' +
+        'FOREIGN KEY (blacklist_id) REFERENCES users(user_id)' +
     ');';
 
     db.query(sql, (err, result) =>{
@@ -101,13 +145,14 @@ app.get('/createdb', (req, res) => {
 
     //User Notif Table
     sql = 'CREATE TABLE IF NOT EXISTS `user_notifs` (' +
-        '`user_notif_id` INT NOT NULL AUTO_INCREMENT,' +
-        '`email` VARCHAR(255),' +
-        '`service_name` VARCHAR(255),' +
+        '`user_notif_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,' +
+        '`user_id` INT NOT NULL,' +
+        '`service_id` INT NOT NULL,' +
         '`notif_email` BOOLEAN DEFAULT 0,' +
         '`notif_sms` BOOLEAN DEFAULT 0,' +
         '`notif_push_up` BOOLEAN DEFAULT 0,'+
-        'PRIMARY KEY (`user_notif_id`)' +
+        'FOREIGN KEY (user_id) REFERENCES users(user_id), ' +
+        'FOREIGN KEY (service_id) REFERENCES news_services(service_id) ' +
     ');';
 
     db.query(sql, (err, result) =>{
@@ -118,7 +163,7 @@ app.get('/createdb', (req, res) => {
         }        
     });
     res.send('DB Check log');
-});*/
+});
 
 app.listen(process.env.PORT, () =>{
     console.log(`Listening to ${process.env.PORT}`);
