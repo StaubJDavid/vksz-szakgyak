@@ -6,6 +6,10 @@ const verify = require('../helpers/authVerify');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const fs = require('fs');
+var nodemailer = require('nodemailer');
+const { json } = require('express');
+const jwt_decode = require('jwt-decode');
+const sendEmailVerification = require('../helpers/emailVerification');
 
 //LOGIN:
 router.post('/login', (req, res) => {
@@ -113,6 +117,7 @@ router.post('/register', (req, res) => {
                                         res.status(400).json('Wrong query4');
                                     }else{
                                         //Make the notifications populating query
+                                        let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
                                         results4.map(r => {
                                             sql += `(${results3.insertId}, ${r.service_id}),`;
                                         });
@@ -128,6 +133,10 @@ router.post('/register', (req, res) => {
                                             }else{
                                                 //Everything is good, inserted user to users table, inserted default user notifications into user_notifs
                                                 //Create a JWT with current user email, and role user
+                                                
+                                                sendEmailVerification(email);
+                                                console.log('Sent email verification');
+                                                
                                                 const accessToken = jwt.sign({ email: email, role: "user", id: results3.insertId},
                                                     process.env.SECRET_KEY,
                                                     {expiresIn: "2m"}
@@ -152,6 +161,53 @@ router.post('/register', (req, res) => {
             });  
         }
     });   
+});
+
+//COnfirmation Email
+
+router.get('/confirmation/:token', (req, res) => {
+    const token = req.params.token;
+
+    if(token){
+        jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+            if(err){
+                return res.status(403).json("Token is invalid");
+            }
+            var decoded = jwt_decode(token);
+            db.query('SELECT * FROM users WHERE email LIKE ?', [decoded.user], (err, results) => {
+                if(err){
+                    console.log('Confirmation select user query error');
+                    res.status(400).json('Confirmation select user query error');
+                }else{
+                    if(results.length === 1){
+                        if(results[0].confirmed === 0){
+                            db.query('UPDATE users SET confirmed = 1 WHERE email LIKE ?', [decoded.user], (err, results) => {
+                                if(err){
+                                    console.log('Email confirmation: Updating user\'s status failed');
+                                    res.status(400).json('Email confirmation: Updating user\'s status failed');
+                                }else{
+                                    return res.redirect('http://localhost:3011/auth/login');
+                                }
+                            });
+                        }else{
+                            console.log('Email confirmation: Email already confirmed');
+                            res.status(400).json('Email confirmation: Email already confirmed');
+                        }
+                    }else{
+                        console.log('Email confirmation: There\'s no such user');
+                        res.status(400).json('Email confirmation: There\'s no such user');
+                    }
+                }
+            });
+        });
+    } else{
+        res.status(401).json("Not authenticated");
+    }
+});
+
+
+
+router.post('/confirmation',sendEmailVerification, (req, res) => {  
 });
 
 //Send User Model
