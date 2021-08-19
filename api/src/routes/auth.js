@@ -134,15 +134,9 @@ router.post('/register', (req, res) => {
                                                 console.log(err5);
                                                 res.status(400).json('Wrong query5');
                                             }else{
-                                                //Everything is good, inserted user to users table, inserted default user notifications into user_notifs
-                                                //Create a JWT with current user email, and role user
-                                                // const accessToken = jwt.sign({ email: email, role: "user", id: results3.insertId},
-                                                    //     process.env.SECRET_KEY,
-                                                    //     {expiresIn: "2m"}
-                                                    // );
-                                                    //Send the auth model to frontend
-                                                    sendEmailVerification(req.body.email);
-                                                    res.json({result: true});                                             
+                                                console.log(results5);
+                                                sendEmailVerification(req.body.email);
+                                                res.json({result: true});                                             
                                             }
                                         });                                       
                                     }       

@@ -4,6 +4,7 @@ import {KTSVG} from '../../../../../../_metronic/helpers'
 import * as Yup from 'yup'
 import {useFormik} from 'formik'
 import {IUpdatePassword, IUpdateEmail, updatePassword, updateEmail} from '../SettingsModel'
+import {changePassword} from '../../../../auth/redux/AuthCRUD'
 
 const emailFormValidationSchema = Yup.object().shape({
   newEmail: Yup.string()
@@ -64,12 +65,21 @@ const SignInMethod: React.FC = () => {
       ...passwordUpdateData,
     },
     validationSchema: passwordFormValidationSchema,
-    onSubmit: (values) => {
+    onSubmit: (values2, {setStatus}) => {     
       setLoading2(true)
       setTimeout((values) => {
-        setPasswordUpdateData(values)
-        setLoading2(false)
-        setPasswordForm(false)
+        changePassword(values2.currentPassword, values2.newPassword).then(({data: {result}}) => {
+          setLoading2(false)
+          if(result){
+            setStatus();
+          }
+          setPasswordForm(false)
+        })
+        .catch((error) => {
+          setLoading2(false)
+          setStatus(error.response.data)     
+        })
+        setPasswordUpdateData(values)     
       }, 1000)
     },
   })
@@ -267,6 +277,14 @@ const SignInMethod: React.FC = () => {
                 <div className='form-text mb-5'>
                   Password must be at least 8 character and contain symbols
                 </div>
+
+                {formik2.status ? (
+                  <div className='mb-lg-15 alert alert-danger'>
+                  <div className='alert-text text-center font-weight-bold'>{formik2.status}</div>
+                </div>
+                ) : (
+                  <></>
+                )}
 
                 <div className='d-flex'>
                   <button

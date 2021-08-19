@@ -42,6 +42,7 @@ const ProfileDetails: React.FC = () => {
   }
   
   const [profileError, setProfileError] = useState('');
+  const [avatarError, setAvatarError] = useState('');
 
   const [loading, setLoading] = useState(false)
   const formik = useFormik<UserModel>({
@@ -87,10 +88,12 @@ const ProfileDetails: React.FC = () => {
         .then(({data: {result}}) => {
           console.log('Visszakaptam: ' + result);            
           if(result){
+            setAvatarError('');
             window.location.reload();
           }   
         }).catch((error) => {
           console.log('Error: ' + error);
+          setAvatarError(error.response.data);
         })
       }
     );
@@ -162,6 +165,13 @@ const ProfileDetails: React.FC = () => {
                 </div>
                 {/*end::Image input*/}
               </div>
+
+              {avatarError !== '' && (
+              <div className='alert alert-danger justify-content-start'>
+                <div className='alert-text font-weight-bold'>{avatarError}</div>
+              </div>
+            )}
+
             </div>
 
             <div className='row mb-6'>

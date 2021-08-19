@@ -13,9 +13,10 @@ export const SEND_CONFIRM_EMAIL = `${API_URL}/api/auth/confirmation`
 
 //USER STUFF
 export const REQUEST_PASSWORD_URL = `${API_URL}/api/user/forgot-password`
-export const UPDATE_NOTIFICATIONS_URL = `${API_URL}/api/user/update-notifications`
-export const CHANGE_USER_DETAILS = `${API_URL}/api/user/change-details`
-export const UPDATE_AVATAR = `${API_URL}/api/user/update/avatar`
+export const CHANGE_NOTIFICATIONS_URL = `${API_URL}/api/user/change/notifications`
+export const CHANGE_USER_DETAILS = `${API_URL}/api/user/change/details`
+export const CHANGE_AVATAR = `${API_URL}/api/user/change/avatar`
+export const CHANGE_PASSWORD = `${API_URL}/api/user/change/password`
 
 //ADMIN STUFF
 export const GET_USER_BY_EMAIL = `${API_URL}/api/admin/get-user-by-email`
@@ -84,7 +85,7 @@ export function changeDetails(
 }
 
 export function updateNotifications(notifications: UserCommunicationModel[]) {
-  return axios.put<{result: boolean}>(UPDATE_NOTIFICATIONS_URL, {notifications})
+  return axios.put<{result: boolean}>(CHANGE_NOTIFICATIONS_URL, {notifications})
 }
 
 export function getUsers() {
@@ -100,7 +101,11 @@ export function getUserByEmail(id:number) {
 }
 
 export function uploadAvatar(avatar:string) {
-  return axios.post<{result: boolean}>(UPDATE_AVATAR, {avatar})
+  return axios.post<{result: boolean}>(CHANGE_AVATAR, {avatar})
+}
+
+export function changePassword(current_pass:string,new_pass:string) {
+  return axios.post<{result: boolean}>(CHANGE_PASSWORD, {current_pass, new_pass})
 }
 
 export function getUserByToken() {
