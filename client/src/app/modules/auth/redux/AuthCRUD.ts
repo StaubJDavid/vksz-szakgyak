@@ -9,6 +9,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'localhost:3001'
 export const GET_USER_BY_ACCESSTOKEN_URL = `${API_URL}/api/auth/get-user`
 export const LOGIN_URL = `${API_URL}/api/auth/login`
 export const REGISTER_URL = `${API_URL}/api/auth/register`
+export const SEND_CONFIRM_EMAIL = `${API_URL}/api/auth/confirmation`
 
 //USER STUFF
 export const REQUEST_PASSWORD_URL = `${API_URL}/api/user/forgot-password`
@@ -38,7 +39,7 @@ export function register(
   house_number: string,
   phone: string
   ) {
-  return axios.post<AuthModel>(REGISTER_URL, {
+  return axios.post<{result:boolean}>(REGISTER_URL, {
     email,
     firstname,
     lastname,
@@ -49,6 +50,10 @@ export function register(
     house_number,
     phone
   })
+}
+
+export function sendConfirmEmail(email: string) {
+  return axios.post<{result:boolean}>(SEND_CONFIRM_EMAIL, {email})
 }
 
 // Server should return object => { result: boolean } (Is Email in DB)

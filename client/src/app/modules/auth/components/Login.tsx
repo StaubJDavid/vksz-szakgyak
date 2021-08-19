@@ -50,7 +50,11 @@ export function Login() {
             setLoading(false);
             setSubmitting(false);
             console.log(error);
-            setStatus(error.response.data);
+            if(error.response.status === 310){
+              setStatus(<p>Email has not been confirmed yet, check your email or <Link to='/auth/confirm-email' className='link-primary fw-bolder'>Send another email verification</Link>?</p>)
+            }else{
+              setStatus(error.response.data);
+            }            
           })
       }, 1000)
     },
@@ -77,7 +81,7 @@ export function Login() {
 
       {formik.status ? (
         <div className='mb-lg-15 alert alert-danger'>
-          <div className='alert-text font-weight-bold'>{formik.status}</div>
+          <div className='alert-text text-center font-weight-bold'>{formik.status}</div>
         </div>
       ) : (
         <div className='mb-10 bg-light-info p-8 rounded'>

@@ -5,6 +5,7 @@ import {Registration} from './components/Registration'
 import {ForgotPassword} from './components/ForgotPassword'
 import {Login} from './components/Login'
 import {toAbsoluteUrl} from '../../../_metronic/helpers'
+import { ConfirmEmail } from './components/ConfirmEmail'
 
 export function AuthPage() {
   useEffect(() => {
@@ -31,6 +32,7 @@ export function AuthPage() {
         {/* begin::Wrapper */}
         <div className='w-lg-500px bg-white rounded shadow-sm p-10 p-lg-15 mx-auto'>
           <Switch>
+            <Route path='/auth/confirm-email' component={ConfirmEmail} />
             <Route path='/auth/login' component={Login} />
             <Route path='/auth/registration' component={Registration} />
             <Route path='/auth/forgot-password' component={ForgotPassword} />

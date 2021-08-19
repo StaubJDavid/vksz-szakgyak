@@ -24,12 +24,12 @@ router.post('/login', (req, res) => {
         }else {
             // console.log(results.length);
             // console.log(results);
-            if(results.length === 1 && results[0].BlackListEmail === null){
+            if(results.length === 1 && results[0].BlackListEmail === null && results[0].confirmed === 1){
                 const userEmail = results[0].email;
                 //const dbPassHash = results[0].pw_hash;
                 if(userEmail === email && bcrypt.compareSync(password, results[0].pw_hash)){
                     //Generate webtoken
-                    console.log('Generating webtoken with id: ' + results[0].user_id);
+                    // console.log('Generating webtoken with id: ' + results[0].user_id);
                     const accessToken = jwt.sign({ email: userEmail, role: results[0].role, id: results[0].user_id},
                             process.env.SECRET_KEY,
                             {expiresIn: "10m"}
@@ -49,13 +49,16 @@ router.post('/login', (req, res) => {
                 }else if(results[0].BlackListEmail !== null){
                     console.log("Email blacklisted?");
                     res.status(400).json('Email blacklisted');
+                }else if(results[0].confirmed === 0){
+                    console.log("Email has not been confirmed yet, check your email or send another verification email?");
+                    res.status(310).json('Email has not been confirmed yet, check your email or send another verification email?');
                 }
-
+                
                 if(results.length > 1){
                     console.log("More Email found?");
                     res.status(400).json('More Email found');
                 }
-          
+       
             }            
         }
     });
@@ -133,16 +136,13 @@ router.post('/register', (req, res) => {
                                             }else{
                                                 //Everything is good, inserted user to users table, inserted default user notifications into user_notifs
                                                 //Create a JWT with current user email, and role user
-                                                
-                                                sendEmailVerification(email);
-                                                console.log('Sent email verification');
-                                                
-                                                const accessToken = jwt.sign({ email: email, role: "user", id: results3.insertId},
-                                                    process.env.SECRET_KEY,
-                                                    {expiresIn: "2m"}
-                                                );
-                                                //Send the auth model to frontend
-                                                res.json({accessToken: accessToken});
+                                                // const accessToken = jwt.sign({ email: email, role: "user", id: results3.insertId},
+                                                    //     process.env.SECRET_KEY,
+                                                    //     {expiresIn: "2m"}
+                                                    // );
+                                                    //Send the auth model to frontend
+                                                    sendEmailVerification(req.body.email);
+                                                    res.json({result: true});                                             
                                             }
                                         });                                       
                                     }       
@@ -164,7 +164,6 @@ router.post('/register', (req, res) => {
 });
 
 //COnfirmation Email
-
 router.get('/confirmation/:token', (req, res) => {
     const token = req.params.token;
 
@@ -207,7 +206,32 @@ router.get('/confirmation/:token', (req, res) => {
 
 
 
-router.post('/confirmation',sendEmailVerification, (req, res) => {  
+router.post('/confirmation', (req, res) => {
+    
+    db.query('SELECT * FROM users WHERE email LIKE ?', [req.body.email], (err, results)=>{
+        if(err){
+            console.log('Confirmation query error');
+            res.status(400).json('Confirmation query error');
+        }else{
+            if(results.length === 1 && results[0].confirmed === 0){
+
+                sendEmailVerification(req.body.email);
+            
+                res.json({result: true});
+
+            }else{
+                if(results.length === 0){
+                    console.log('There\'s no such email registered');
+                    res.status(400).json('There\'s no such email registered');
+                }else if(results[0].confirmed === 1){
+                    console.log('Email already confirmed');
+                    res.status(400).json('Email already confirmed');
+                }
+                
+            }
+        }
+    });
+    
 });
 
 //Send User Model

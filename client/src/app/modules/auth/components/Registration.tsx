@@ -6,7 +6,7 @@ import * as Yup from 'yup'
 import clsx from 'clsx'
 import * as auth from '../redux/AuthRedux'
 import {register} from '../redux/AuthCRUD'
-import {Link} from 'react-router-dom'
+import {Link, useHistory } from 'react-router-dom'
 import {toAbsoluteUrl} from '../../../../_metronic/helpers'
 
 const initialValues = {
@@ -71,6 +71,7 @@ const registrationSchema = Yup.object().shape({
 })
 
 export function Registration() {
+  let history = useHistory();
   const [loading, setLoading] = useState(false)
   const dispatch = useDispatch()
   const formik = useFormik({
@@ -90,9 +91,11 @@ export function Registration() {
             values.house_number,
             values.phone
             )//Register Function End
-          .then(({data: {accessToken}}) => {
+          .then(({data: {result}}) => {
             setLoading(false)
-            dispatch(auth.actions.login(accessToken))
+            if(result){
+              history.push('/auth/login')
+            }
           })
           .catch((error) => {
             //console.log(error.response.status);
