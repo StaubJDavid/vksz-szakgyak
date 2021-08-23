@@ -1,20 +1,30 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, {FC, useState, useEffect} from 'react'
 import {UserModel} from '../../auth/models/UserModel'
-import {getUserByEmail} from '../../auth/redux/AuthCRUD'
+import {getUserById} from '../../auth/redux/AuthCRUD'
 import {Link} from 'react-router-dom'
 import {PFP} from '../../../../_metronic/helpers'
+import {ProfileDetails} from './settings/cards/ProfileDetails'
+import {UserProfileDetails} from './settings/cards/UserProfileDetails'
+import {UserNotifications} from './settings/cards/UserNotifications'
+import * as auth from '../../auth/redux/AuthRedux'
+import {useSelector} from 'react-redux'
+import {LayoutSplashScreen} from '../../../../_metronic/layout/core'
+import { UserPasswordEmail } from './settings/cards/UserPasswordEmail'
 
 const UserProfile: FC = () => {
   const pathString = window.location.pathname;
-  console.log(pathString.slice(6,pathString.length));
+  // console.log(pathString.slice(6,pathString.length));
 
+  const [isLoading, setLoading] = useState(true);
+  // const [showSplashScreen, setShowSplashScreen] = useState(true)
   const [user, setData] = useState<UserModel>();
   useEffect(() => {
       const User = async () => {
         try {
-          const response = await getUserByEmail(parseInt(pathString.slice(6,pathString.length), 10));
+          const response = await getUserById(parseInt(pathString.slice(6,pathString.length), 10));
           setData(response.data.user);
+          setLoading(false)
         } catch (error) {
           console.log(error)
         }
@@ -23,7 +33,8 @@ const UserProfile: FC = () => {
       User()
     }, []);
 
-  return (
+
+  return isLoading ? <LayoutSplashScreen /> : (
     <>
     {/*User Profile BEGIN*/}
     <div className='card mb-5 mb-xl-10' id='kt_profile_details_view'>
@@ -86,7 +97,7 @@ const UserProfile: FC = () => {
           <label className='col-lg-4 fw-bold text-muted'>Address</label>
 
           <div className='col-lg-8'>
-            <span className='fw-bolder fs-6 text-dark'>{user?.address?.postCode} {user?.address?.city} {user?.address?.street} {user?.address?.house_number}</span>
+            <span className='fw-bolder fs-6 text-dark'>{user?.zip} {user?.city} {user?.street} {user?.house_number}</span>
           </div>
         </div>
         
@@ -102,7 +113,10 @@ const UserProfile: FC = () => {
       </div>
       {/*User Profile BODY END*/}        
     </div>
-    {/*User Profile END*/}     
+    {/*User Profile END*/}    
+    <UserProfileDetails id={user?.id === undefined?0:user.id}/> 
+    <UserNotifications user={user!}/>
+    <UserPasswordEmail id={user?.id === undefined?0:user.id} email={user?.email === undefined?'':user.email}/>
   </>
   )
 

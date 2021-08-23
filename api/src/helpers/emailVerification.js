@@ -2,13 +2,15 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 var nodemailer = require('nodemailer');
 
+require('dotenv').config();
+
 function sendEmailVerification(email){
     const transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
         auth: {
-            user: 'isabella.daugherty58@ethereal.email',
-            pass: 'bCMKFutjxc9MVXxe77'
+            user: process.env.EMAIL_USERNAME,
+            pass: process.env.EMAIL_PASSWORD
         }
     });
 
@@ -20,12 +22,12 @@ function sendEmailVerification(email){
         {expiresIn: "1h"},
     );
 
-    const url = `http://localhost:3001/api/auth/confirmation/${emailToken}`;
+    const url = `${process.env.API_URL}/api/auth/confirmation/${emailToken}`;
 
     // console.log(emailToken);
 
     var mailOptions = {
-        from: 'isabelsadla.daugherty58@ethereal.email',
+        from: process.env.EMAIL_USERNAME,
         to: toEmail,
         subject: 'Confirmation email',
         html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`

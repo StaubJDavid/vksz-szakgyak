@@ -14,7 +14,7 @@ export interface UserModel {
   fullname?: string
   occupation?: string
   companyName?: string
-  phone?: string
+  phone: string
   roles?: Array<string>
   pic?: string
   language?: 'en' | 'de' | 'es' | 'fr' | 'ja' | 'zh' | 'ru'
@@ -22,12 +22,12 @@ export interface UserModel {
   website?: 'https://keenthemes.com'
   emailSettings?: UserEmailSettingsModel
   auth?: AuthModel
-  communication?: Array<UserCommunicationModel>
+  communication: Array<UserCommunicationModel>
   address?: UserAddressModel
-  zip?: string
-  city?: string
-  street?: string
-  house_number?: string
+  zip: string
+  city: string
+  street: string
+  house_number: string
   socialNetworks?: UserSocialNetworksModel
   blacklisted?: number
 }

@@ -1,26 +1,22 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {PFP} from '../../../../../../_metronic/helpers'
 import {useSelector} from 'react-redux'
+import {Link} from 'react-router-dom'
 import * as Yup from 'yup'
 import {useFormik} from 'formik'
 import { UserModel } from '../../../../auth/models/UserModel'
-import {changeDetails, uploadAvatar} from '../../../../auth/redux/AuthCRUD'
+import {changeDetails, uploadAvatar, getUserById} from '../../../../auth/redux/AuthCRUD'
 import * as auth from '../../../../auth/redux/AuthRedux'
+import {LayoutSplashScreen} from '../../../../../../_metronic/layout/core'
 
-// const initialValues = {
-//   id: 0,
-//   email:'',
-//   firstname: '',
-//   lastname: '',
-//   zip: '',
-//   city: '',
-//   street: '',
-//   house_number: '',
-//   phone: '',
-// }
 
+
+type Props = {
+  id: number
+}
 
 const profileDetailsSchema = Yup.object().shape({
+  id:Yup.number(),
   email:Yup.string(),
   firstname: Yup.string(),
   lastname: Yup.string(),
@@ -31,31 +27,69 @@ const profileDetailsSchema = Yup.object().shape({
   phone: Yup.string(),
 })
 
-const ProfileDetails: React.FC = () => {
-  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
-  const stuff2 = JSON.parse(stuff);
-  const user = stuff2.payload.user.auth.user;
+const UserProfileDetails: React.FC<Props> = ({id}) => {
+  const initialValues = {
+    id: 0,
+    email:'',
+    firstname: '',
+    lastname: '',
+    zip: '',
+    city: '',
+    street: '',
+    house_number: '',
+    communication: [],
+    phone: '',
+  }
 
+  const [user, setUser] = useState<UserModel>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<UserModel>(user === undefined?initialValues:user);
+  useEffect(() => {
+      const User = async () => {
+        try {
+          const response = await getUserById(id);
+          // console.log(response.data.user);
+          initialValues.id = response.data.user.id;
+          initialValues.firstname = response.data.user.firstname;
+          initialValues.lastname = response.data.user.lastname;
+          initialValues.phone = response.data.user.phone;
+          initialValues.zip = response.data.user.zip;
+          initialValues.city = response.data.user.city;
+          initialValues.street = response.data.user.street;
+          initialValues.house_number = response.data.user.house_number;
+          setUser(response.data.user);
+          setData(response.data.user);
+          setIsLoading(false);
+          // setInitialValues(response.data.user);
+        } catch (error) {
+          console.log(error)
+          setIsLoading(false);
+        }
+      }
+  
+      User()
+    }, []);
+
+  // const [initialValues2, setInitialValues] = useState<UserModel>(user === undefined?initialValues:user);
   // console.log(user);
-  // console.log('Huh');
-  const [data, setData] = useState<UserModel>(user)
+  // console.log('InitVal:' + JSON.stringify(initialValues2));
+  
   const updateData = (fieldsToUpdate: Partial<UserModel>): void => {
     const updatedData = Object.assign(data, fieldsToUpdate)
     setData(updatedData)
   }
 
-  const initialValues = {
-    id: user.id,
-    email: user.email,
-    firstname: user.firstname,
-    lastname: user.lastname,
-    zip: user.zip,
-    city: user.city,
-    street: user.street,
-    communication: user.communication,
-    house_number: user.house_number,
-    phone: user.phone,
-  }
+  // const initialValues = {
+  //   id: user!.id,
+  //   email: user!.email,
+  //   firstname: user!.firstname,
+  //   lastname: user!.lastname,
+  //   zip: user?.address?.postCode,
+  //   city: user?.address?.city,
+  //   street: user?.address?.street,
+  //   house_number: user?.address?.house_number,
+  //   phone: user!.phone,
+  // }
   
   const [profileError, setProfileError] = useState('');
   const [avatarError, setAvatarError] = useState('');
@@ -67,10 +101,10 @@ const ProfileDetails: React.FC = () => {
     onSubmit: (values) => {
       setLoading(true)
       setTimeout(() => {
-        // console.log(values);
-        changeDetails(user.id, values.email, values.firstname, values.lastname, values.zip, values.city, values.street, values.house_number, values.phone)
+        console.log(values);
+        changeDetails(id, values.email, values.firstname, values.lastname, values.zip, values.city, values.street, values.house_number, values.phone)
         .then(({data: {result}}) => {
-          console.log('Visszakaptam: ' + result);         
+          //console.log('Visszakaptam: ' + result);         
           setLoading(false);         
           setProfileError('');      
           if(result === true){
@@ -100,7 +134,7 @@ const ProfileDetails: React.FC = () => {
     getBase64(avatar).then(
       data => {
         let base64 = JSON.stringify(data);
-        uploadAvatar(base64, user.id)
+        uploadAvatar(base64, id)
         .then(({data: {result}}) => {
           console.log('Visszakaptam: ' + result);            
           if(result){
@@ -115,12 +149,11 @@ const ProfileDetails: React.FC = () => {
     );
   }
 
-  return (
+  return isLoading ? <LayoutSplashScreen /> : (
     <div className='card mb-5 mb-xl-10'>
       <div
         className='card-header border-0 cursor-pointer'
         role='button'
-        data-bs-toggle='collapse'
         data-bs-target='#kt_account_profile_details'
         aria-expanded='true'
         aria-controls='kt_account_profile_details'
@@ -128,6 +161,10 @@ const ProfileDetails: React.FC = () => {
         <div className='card-title m-0'>
           <h3 className='fw-bolder m-0'>Profile Details</h3>
         </div>
+
+        <Link to='/admin-board' className='btn btn-primary align-self-center'>
+            Back
+        </Link>
       </div>
 
       <div id='kt_account_profile_details' className='collapse show'>
@@ -139,7 +176,7 @@ const ProfileDetails: React.FC = () => {
               <div className='col-lg-8'>
 
                 {/*begin::Image input*/}
-                <div className="image-input image-input-empty" data-kt-image-input="true" style={{backgroundImage: `url(${PFP(user.pic === undefined?'':user.pic)})`}}>
+                <div className="image-input image-input-empty" data-kt-image-input="true" style={{backgroundImage: `url(${PFP(user?.pic === undefined?'':user?.pic)})`}}>
                     {/*begin::Image preview wrapper*/}
                     <div className="image-input-wrapper w-125px h-125px"></div>
                     {/*end::Image preview wrapper*/}
@@ -352,4 +389,4 @@ const ProfileDetails: React.FC = () => {
   )
 }
 
-export {ProfileDetails}
+export {UserProfileDetails}

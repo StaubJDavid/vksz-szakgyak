@@ -99,7 +99,7 @@ const DashboardWrapper: FC = () => {
   const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
   const stuff2 = JSON.parse(stuff);
   const user = stuff2.payload.user.auth.user;
-  console.log(user)
+  // console.log(user)
   return (
     <>
       <PageTitle breadcrumbs={[]}>{intl.formatMessage({id: 'MENU.DASHBOARD'})}</PageTitle>

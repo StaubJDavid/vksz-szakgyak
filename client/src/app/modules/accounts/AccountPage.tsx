@@ -24,21 +24,7 @@ const accountBreadCrumbs: Array<PageLink> = [
 ]
 
 const AccountPage: React.FC = () => {
-  // const [userb, setData] = useState<UserModel>();
-  // useEffect(() => {
-  //     const Users = async () => {
-  //       try {
-  //         const response = await getUserByEmail('davidkah20@gmail.com');
-  //         //usersStuff = ;
-  //         setData(response.data.user);
-  //       } catch (error) {
-  //         console.log(error)
-  //       }
-  //     }
   
-  //     Users()
-  //   }, []);
-
   return (
     <>
       <AccountHeader />

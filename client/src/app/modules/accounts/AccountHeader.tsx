@@ -17,7 +17,7 @@ const AccountHeader: React.FC = () => {
   const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
   const stuff2 = JSON.parse(stuff);
   const user = stuff2.payload.user.auth.user;
-  console.log(user);
+  // console.log(user);
 
   return (
     <div className='card mb-5 mb-xl-10'>
@@ -47,7 +47,7 @@ const AccountHeader: React.FC = () => {
             <div className='d-flex flex-wrap flex-stack'>
               <div className='d-flex flex-column flex-grow-1 pe-8'>
                 <div className='d-flex flex-wrap'>
-                  <span className='fw-bold fs-6'>{user.address.postCode} {user.address.city} {user.address.street} {user.address.house_number}</span>
+                  <span className='fw-bold fs-6'>{user.zip} {user.city} {user.street} {user.house_number}</span>
                 </div>
                 <div className='d-flex flex-wrap'>
                   <span className='fw-bold fs-6'>Telefonszám: {user.phone}</span>

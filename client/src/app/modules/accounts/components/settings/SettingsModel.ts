@@ -22,8 +22,17 @@ export interface IUpdateEmail {
   confirmPassword: string
 }
 
+export interface IUpdateEmailAdmin {
+  newEmail: string
+}
+
 export interface IUpdatePassword {
   currentPassword: string
+  newPassword: string
+  passwordConfirmation: string
+}
+
+export interface IUpdatePasswordAdmin {
   newPassword: string
   passwordConfirmation: string
 }
@@ -96,12 +105,21 @@ export const profileDetailsInitValues: IProfileDetails = {
 }
 
 export const updateEmail: IUpdateEmail = {
-  newEmail: 'support@keenthemes.com',
+  newEmail: '',
   confirmPassword: '',
+}
+
+export const updateEmailAdmin: IUpdateEmailAdmin = {
+  newEmail: '',
 }
 
 export const updatePassword: IUpdatePassword = {
   currentPassword: '',
+  newPassword: '',
+  passwordConfirmation: '',
+}
+
+export const updatePasswordAdmin: IUpdatePasswordAdmin = {
   newPassword: '',
   passwordConfirmation: '',
 }

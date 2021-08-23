@@ -1,16 +1,36 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 //import {INotifications, notifications} from '../SettingsModel'
 import {useSelector} from 'react-redux'
 import * as auth from '../../../../auth/redux/AuthRedux'
-import {updateNotifications} from '../../../../auth/redux/AuthCRUD'
-import { UserCommunicationModel } from '../../../../auth/models/UserCommunicationModel'
+import {updateNotifications, getUserById} from '../../../../auth/redux/AuthCRUD'
+import { UserCommunicationModel} from '../../../../auth/models/UserCommunicationModel'
+import { UserModel} from '../../../../auth/models/UserModel'
 
-const Notifications: React.FC = () => {
-  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
-  const stuff2 = JSON.parse(stuff);
-  const user = stuff2.payload.user.auth.user;
+type Props = {
+  user: UserModel
+}
 
-  const [data, setData] = useState<UserCommunicationModel[]>(user.communication)
+const UserNotifications: React.FC<Props> = ({user}) => {
+  // const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
+  // const stuff2 = JSON.parse(stuff);
+  // const [user, setUser] = useState<UserModel>();
+
+  // useEffect(() => {
+  //   const User = async () => {
+  //     try {
+  //       const response = await getUserById(id);
+  //       console.log(response.data.user);
+  //       setUser(response.data.user);
+  //       // setInitialValues(response.data.user);
+  //     } catch (error) {
+  //       console.log(error)
+  //     }
+  //   }
+
+  //   User()
+  // }, []);
+
+  const [data, setData] = useState<UserCommunicationModel[]>(user.communication);
 
   const updateData = (fieldsToUpdate: UserCommunicationModel) => {
     let index = user.communication.findIndex((element:UserCommunicationModel) => element.service_id === fieldsToUpdate.service_id)
@@ -365,4 +385,4 @@ const Notifications: React.FC = () => {
   )
 }
 
-export {Notifications}
+export {UserNotifications}

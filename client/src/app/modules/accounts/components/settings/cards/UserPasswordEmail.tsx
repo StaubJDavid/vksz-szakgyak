@@ -4,10 +4,9 @@ import {KTSVG} from '../../../../../../_metronic/helpers'
 import * as Yup from 'yup'
 import {useSelector} from 'react-redux'
 import {useFormik} from 'formik'
-import {IUpdatePassword, IUpdateEmail, updatePassword, updateEmail} from '../SettingsModel'
-import {changePassword, changeEmail} from '../../../../auth/redux/AuthCRUD'
+import {IUpdatePasswordAdmin, IUpdateEmailAdmin, updatePasswordAdmin, updateEmailAdmin} from '../SettingsModel'
+import {adminChangePassword, adminChangeEmail} from '../../../../auth/redux/AuthCRUD'
 import * as auth from '../../../../auth/redux/AuthRedux'
-import { useHistory } from 'react-router-dom';
 
 const emailFormValidationSchema = Yup.object().shape({
   newEmail: Yup.string()
@@ -15,17 +14,9 @@ const emailFormValidationSchema = Yup.object().shape({
     .min(3, 'Minimum 3 symbols')
     .max(50, 'Maximum 50 symbols')
     .required('Email is required'),
-  confirmPassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Password is required'),
 })
 
 const passwordFormValidationSchema = Yup.object().shape({
-  currentPassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Password is required'),
   newPassword: Yup.string()
     .min(3, 'Minimum 3 symbols')
     .max(50, 'Maximum 50 symbols')
@@ -37,21 +28,22 @@ const passwordFormValidationSchema = Yup.object().shape({
     .oneOf([Yup.ref('newPassword'), null], 'Passwords must match'),
 })
 
-const SignInMethod: React.FC = () => {
-  let history = useHistory();
-  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
-  const stuff2 = JSON.parse(stuff);
-  const user = stuff2.payload.user.auth.user;
+type Props = {
+  id:number
+  email:string
+}
 
-  const [emailUpdateData, setEmailUpdateData] = useState<IUpdateEmail>(updateEmail)
-  const [passwordUpdateData, setPasswordUpdateData] = useState<IUpdatePassword>(updatePassword)
+const UserPasswordEmail: React.FC<Props> = ({id, email}) => {
+
+  const [emailUpdateData, setEmailUpdateData] = useState<IUpdateEmailAdmin>(updateEmailAdmin)
+  const [passwordUpdateData, setPasswordUpdateData] = useState<IUpdatePasswordAdmin>(updatePasswordAdmin)
 
   const [showEmailForm, setShowEmailForm] = useState<boolean>(false)
   const [showPasswordForm, setPasswordForm] = useState<boolean>(false)
 
   const [loading1, setLoading1] = useState(false)
 
-  const formik1 = useFormik<IUpdateEmail>({
+  const formik1 = useFormik<IUpdateEmailAdmin>({
     initialValues: {
       ...emailUpdateData,
     },
@@ -59,13 +51,11 @@ const SignInMethod: React.FC = () => {
     onSubmit: (values1, {setStatus}) => {
       setLoading1(true)
       setTimeout((values) => {
-        changeEmail(values1.newEmail,values1.confirmPassword, user.id).then(({data: {result}}) => {
+        adminChangeEmail(values1.newEmail, id).then(({data: {result}}) => {
           setLoading1(false)
-          if(result){
+          if(result){           
             setStatus();
-            history.push({
-              pathname: `/logout`
-            })
+            window.location.reload();
           }
           setShowEmailForm(false)
         })
@@ -80,7 +70,7 @@ const SignInMethod: React.FC = () => {
 
   const [loading2, setLoading2] = useState(false)
 
-  const formik2 = useFormik<IUpdatePassword>({
+  const formik2 = useFormik<IUpdatePasswordAdmin>({
     initialValues: {
       ...passwordUpdateData,
     },
@@ -88,7 +78,7 @@ const SignInMethod: React.FC = () => {
     onSubmit: (values2, {setStatus}) => {     
       setLoading2(true)
       setTimeout((values) => {
-        changePassword(values2.currentPassword, values2.newPassword, values.passwordConfirmation, user.id).then(({data: {result}}) => {
+        adminChangePassword(values2.newPassword, values2.passwordConfirmation, id).then(({data: {result}}) => {
           setLoading2(false)
           if(result){
             setStatus();
@@ -122,7 +112,7 @@ const SignInMethod: React.FC = () => {
           <div className='d-flex flex-wrap align-items-center'>
             <div id='kt_signin_email' className={' ' + (showEmailForm && 'd-none')}>
               <div className='fs-6 fw-bolder mb-1'>Email Address</div>
-              <div className='fw-bold text-gray-600'>{user.email}</div>
+              <div className='fw-bold text-gray-600'></div>
             </div>
 
             <div
@@ -155,26 +145,7 @@ const SignInMethod: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div className='col-lg-6'>
-                    <div className='fv-row mb-0'>
-                      <label
-                        htmlFor='confirmemailpassword'
-                        className='form-label fs-6 fw-bolder mb-3'
-                      >
-                        Confirm Password
-                      </label>
-                      <input
-                        type='password'
-                        className='form-control form-control-lg form-control-solid'
-                        id='confirmemailpassword'
-                        {...formik1.getFieldProps('confirmPassword')}
-                      />
-                      {formik1.touched.confirmPassword && formik1.errors.confirmPassword && (
-                        <div className='fv-plugins-message-container'>
-                          <div className='fv-help-block'>{formik1.errors.confirmPassword}</div>
-                        </div>
-                      )}
-                    </div>
+                  <div className='col-lg-6'>  
                   </div>
                 </div>
 
@@ -245,25 +216,6 @@ const SignInMethod: React.FC = () => {
                 noValidate
               >
                 <div className='row mb-1'>
-                  <div className='col-lg-4'>
-                    <div className='fv-row mb-0'>
-                      <label htmlFor='currentpassword' className='form-label fs-6 fw-bolder mb-3'>
-                        Current Password
-                      </label>
-                      <input
-                        type='password'
-                        className='form-control form-control-lg form-control-solid '
-                        id='currentpassword'
-                        {...formik2.getFieldProps('currentPassword')}
-                      />
-                      {formik2.touched.currentPassword && formik2.errors.currentPassword && (
-                        <div className='fv-plugins-message-container'>
-                          <div className='fv-help-block'>{formik2.errors.currentPassword}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
                   <div className='col-lg-4'>
                     <div className='fv-row mb-0'>
                       <label htmlFor='newpassword' className='form-label fs-6 fw-bolder mb-3'>
@@ -358,33 +310,10 @@ const SignInMethod: React.FC = () => {
             </div>
           </div>
 
-          {/* <div className='notice d-flex bg-light-primary rounded border-primary border border-dashed p-6'>
-            <KTSVG
-              path='/media/icons/duotone/General/Shield-check.svg'
-              className='svg-icon-2tx svg-icon-primary me-4'
-            />
-            <div className='d-flex flex-stack flex-grow-1 flex-wrap flex-md-nowrap'>
-              <div className='mb-3 mb-md-0 fw-bold'>
-                <h4 className='text-gray-800 fw-bolder'>Secure Your Account</h4>
-                <div className='fs-6 text-gray-600 pe-7'>
-                  Two-factor authentication adds an extra layer of security to your account. To log
-                  in, in addition you'll need to provide a 6 digit code
-                </div>
-              </div>
-              <a
-                href='#'
-                className='btn btn-primary px-6 align-self-center text-nowrap'
-                data-bs-toggle='modal'
-                data-bs-target='#kt_modal_two_factor_authentication'
-              >
-                Enable
-              </a>
-            </div>
-          </div> */}
         </div>
       </div>
     </div>
   )
 }
 
-export {SignInMethod}
+export {UserPasswordEmail}

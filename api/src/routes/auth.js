@@ -10,7 +10,7 @@ var nodemailer = require('nodemailer');
 const { json } = require('express');
 const jwt_decode = require('jwt-decode');
 const sendEmailVerification = require('../helpers/emailVerification');
-
+require('dotenv').config();
 //LOGIN:
 router.post('/login', (req, res) => {
     const { email, password} = req.body;
@@ -32,7 +32,7 @@ router.post('/login', (req, res) => {
                     // console.log('Generating webtoken with id: ' + results[0].user_id);
                     const accessToken = jwt.sign({ email: userEmail, role: results[0].role, id: results[0].user_id},
                             process.env.SECRET_KEY,
-                            {expiresIn: "10m"}
+                            {expiresIn: "30m"}
                         );
                     res.json({
                         accessToken: accessToken
@@ -69,7 +69,7 @@ router.post('/register', (req, res) => {
     const {email, firstname, lastname, password, zip, city, street, house_number, phone} = req.body;
 
     //Load Default Avatar
-    const avatarData = fs.readFileSync('./src/media/blank.png', {encoding: 'base64'});
+    const avatarData = fs.readFileSync(process.env.DEFAULT_AVATAR_LOCATION, {encoding: 'base64'});
 
     //Password Crypt
     const hash = bcrypt.hashSync(password, saltRounds); 
@@ -179,7 +179,7 @@ router.get('/confirmation/:token', (req, res) => {
                                     console.log('Email confirmation: Updating user\'s status failed');
                                     res.status(400).json('Email confirmation: Updating user\'s status failed');
                                 }else{
-                                    return res.redirect('http://localhost:3011/auth/login');
+                                    return res.redirect(`${process.env.CLIENT_URL}/auth/login`);
                                 }
                             });
                         }else{
@@ -197,8 +197,6 @@ router.get('/confirmation/:token', (req, res) => {
         res.status(401).json("Not authenticated");
     }
 });
-
-
 
 router.post('/confirmation', (req, res) => {
     
@@ -230,7 +228,7 @@ router.post('/confirmation', (req, res) => {
 
 //Send User Model
 router.get('/get-user', verify, (req, res) => {
-    // console.log('UserID:' + req.user.id);
+    console.log('UserID:' + req.user.id);
     db.query('SELECT * FROM users WHERE user_id = ?',req.user.id, (err, results) => {
         if(err){
             console.log(err);
@@ -261,7 +259,10 @@ router.get('/get-user', verify, (req, res) => {
                             phone: phone,
                             roles: [role],
                             pic: avatar,
-                            address: {addressLine: zip + " " + city + " " + street + " " + house_number, city: city, state: city + ' megye', street: street, house_number: house_number, postCode: zip},
+                            zip: zip,
+                            city: city,
+                            house_number: house_number,
+                            street: street,
                             communication: communications
                         });
                         //console.log('Sent json');

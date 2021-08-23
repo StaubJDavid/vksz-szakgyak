@@ -3,6 +3,6 @@ export interface UserAddressModel {
   city: string
   state: string
   street?: string
-  house_number?: string
+  house_number: string
   postCode: string
 }

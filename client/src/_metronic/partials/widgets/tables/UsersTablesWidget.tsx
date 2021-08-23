@@ -10,7 +10,7 @@ type Props = {
 }
 
 function onBlockClick(id:number, email:string){
-  console.log(id);
+  // console.log(id);
   userBlockUnblock(id,email).then(({data: {result}}) => {
     console.log('Visszakaptam: ' + result);   
   }).catch((error) => {
@@ -36,9 +36,9 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
     }, []);
 
   function onEmailClick(id:number){
-    console.log('Clicked');
+    // console.log('Clicked');
     let index = users.findIndex((element:UserModel) => element.id === id);
-    console.log(users[index]);
+    // console.log(users[index]);
     history.push({
       pathname: `/user/${users[index].id}`
     })
@@ -85,11 +85,11 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
             <tbody>
               {/* begin::Table row */}
               {users.map((u:UserModel) => (
-                <tr key={u.id} style={{backgroundColor: u.blacklisted ? '#dc3545' : 'white'}}>
+                <tr key={u.id} >
                 <td>
-                  {/*<div className='form-check form-check-sm form-check-custom form-check-solid'>
-                    <input className='form-check-input widget-9-check' type='checkbox' value='1' />
-              </div>*/}
+                  <div className='form-check form-check-sm form-check-custom form-check-solid'>
+                    {u.blacklisted? (<span className="badge badge-light-danger">Blocked</span>): (<></>)}
+                  </div>
                 </td>
                 <td>
                   <div className='d-flex align-items-center'>
@@ -115,7 +115,18 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                   <div className='d-flex justify-content-center flex-shrink-0'>                   
                     <a                   
                       href='#'
-                      onClick={() => {onBlockClick(u.id, u.email); updateData({id: u.id, email: u.email, firstname: u.firstname, lastname: u.lastname, phone: u.phone, blacklisted: u.blacklisted? 0:1})}}
+                      onClick={() => {onBlockClick(u.id, u.email); updateData({
+                        id: u.id,
+                        email: u.email,
+                        firstname: u.firstname,
+                        lastname: u.lastname,
+                        phone: u.phone,
+                        city: u.city,
+                        street: u.street,
+                        house_number: u.house_number,
+                        zip: u.zip,
+                        communication: u.communication,
+                        blacklisted: u.blacklisted? 0:1})}}
                       className='btn btn-icon btn-bg-light btn-active-color-primary btn-sm'
                     >
                       <KTSVG path='/media/icons/duotone/General/Trash.svg' className='svg-icon-3' />

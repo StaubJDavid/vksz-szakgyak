@@ -17,11 +17,14 @@ export const CHANGE_NOTIFICATIONS_URL = `${API_URL}/api/user/change/notification
 export const CHANGE_USER_DETAILS = `${API_URL}/api/user/change/details`
 export const CHANGE_AVATAR = `${API_URL}/api/user/change/avatar`
 export const CHANGE_PASSWORD = `${API_URL}/api/user/change/password`
+export const CHANGE_EMAIL = `${API_URL}/api/user/change/email`
 
 //ADMIN STUFF
 export const GET_USER_BY_EMAIL = `${API_URL}/api/admin/get-user-by-email`
 export const GET_USERS_URL = `${API_URL}/api/admin/get-users`
 export const USER_BLOCK_UNBLOCK = `${API_URL}/api/admin/block-user`
+export const ADMIN_CHANGE_PASSWORD = `${API_URL}/api/admin/change/password`
+export const ADMIN_CHANGE_EMAIL = `${API_URL}/api/admin/change/email`
 
 // Server should return AuthModel
 export function login(email: string, password: string) {
@@ -63,6 +66,7 @@ export function requestPassword(email: string) {
 }
 
 export function changeDetails(
+    user_id:number,
     email: string, 
     firstname: string, 
     lastname: string, 
@@ -73,6 +77,7 @@ export function changeDetails(
     phone: string | undefined,
   ) {
   return axios.post<{result: boolean}>(CHANGE_USER_DETAILS, {
+    user_id,
     email,
     firstname,
     lastname,
@@ -84,8 +89,8 @@ export function changeDetails(
   })
 }
 
-export function updateNotifications(notifications: UserCommunicationModel[]) {
-  return axios.put<{result: boolean}>(CHANGE_NOTIFICATIONS_URL, {notifications})
+export function updateNotifications(notifications: UserCommunicationModel[], user_id:number) {
+  return axios.put<{result: boolean}>(CHANGE_NOTIFICATIONS_URL, {notifications, user_id})
 }
 
 export function getUsers() {
@@ -96,16 +101,28 @@ export function userBlockUnblock(id:number, email:string) {
   return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {id, email})
 }
 
-export function getUserByEmail(id:number) {
+export function getUserById(id:number) {
   return axios.post<{user: UserModel}>(GET_USER_BY_EMAIL, {id})
 }
 
-export function uploadAvatar(avatar:string) {
-  return axios.post<{result: boolean}>(CHANGE_AVATAR, {avatar})
+export function uploadAvatar(avatar:string, user_id:number) {
+  return axios.post<{result: boolean}>(CHANGE_AVATAR, {avatar, user_id})
 }
 
-export function changePassword(current_pass:string,new_pass:string) {
-  return axios.post<{result: boolean}>(CHANGE_PASSWORD, {current_pass, new_pass})
+export function changePassword(current_pass:string,new_pass:string, new_pass2:string, user_id:number) {
+  return axios.post<{result: boolean}>(CHANGE_PASSWORD, {current_pass, new_pass, new_pass2, user_id})
+}
+
+export function changeEmail(email:string, current_pass:string, user_id:number) {
+  return axios.post<{result: boolean}>(CHANGE_EMAIL, {email, current_pass, user_id})
+}
+
+export function adminChangeEmail(email:string, user_id:number) {
+  return axios.post<{result: boolean}>(ADMIN_CHANGE_EMAIL, {email, user_id})
+}
+
+export function adminChangePassword(new_pass:string, new_pass2:string, user_id:number) {
+  return axios.post<{result: boolean}>(ADMIN_CHANGE_PASSWORD, {new_pass, new_pass2, user_id})
 }
 
 export function getUserByToken() {

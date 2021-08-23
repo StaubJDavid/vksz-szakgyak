@@ -44,17 +44,17 @@ app.get('/email', (req, res) => {
 
     // https://ethereal.email/create
   // create reusable transporter object using the default SMTP transport
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    auth: {
-        user: 'isabella.daugherty58@ethereal.email',
-        pass: 'bCMKFutjxc9MVXxe77'
-    }
-});
+    const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+            user: process.env.EMAIL_USERNAME,
+            pass: process.env.EMAIL_PASSWORD
+        }
+    });
 
   var mailOptions = {
-    from: 'isabella.daugherty58@ethereal.email',
+    from: process.env.EMAIL_USERNAME,
     to: 'davidkah20@gmail.com',
     subject: 'Hello ✔',
     text: 'Hello world?',

@@ -2,22 +2,28 @@ const express = require('express');
 var router = express.Router();
 const db = require('../database/db');
 const verify = require('../helpers/authVerify');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 
 //Admin Stuff
 router.post('/get-user-by-email', verify, (req,res) => {
-    // console.log(req.user.role);
+    console.log('Got a id request');
     if(req.user.role === 'admin'){
         // console.log('Request body email: ' + req.body.email);
+        console.log(req.body.id);
         db.query('SELECT * FROM users WHERE user_id = ?',[req.body.id], (err, results) => {
             if(err){
+                console.log(req.body.id);
+                console.log('Query1');
                 console.log(err);
                 res.status(400).json('Query error');
             }else{
                 const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
-    
-                db.query('SELECT * FROM `user_notifs` WHERE user_id = ?', [user_id], (err1, results1) => {
+                console.log(results);
+                db.query('SELECT * FROM `user_notifs` un LEFT JOIN `news_services` ns ON un.service_id = ns.service_id  WHERE un.user_id = ?', [req.body.id], (err1, results1) => {
                     if(err1){
+                        console.log('Query2');
                         console.log(err1);
                         res.status(400).json('Query error1');
                     }else{
@@ -25,6 +31,23 @@ router.post('/get-user-by-email', verify, (req,res) => {
                             let communications = [];
                             results1.map(r => {
                                 communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up, service_id: r.service_id});
+                            });
+
+                            console.log({
+                                id: req.body.id,
+                                username: last_name + " " + first_name,
+                                //password: "no password for u",
+                                email: email,
+                                firstname: first_name,
+                                lastname: last_name,
+                                phone: phone,
+                                roles: [role],
+                                pic: avatar,
+                                zip: zip,
+                                city: city,
+                                house_number: house_number,
+                                street: street,
+                                communication: communications
                             });
 
                             res.json({user:{
@@ -37,17 +60,20 @@ router.post('/get-user-by-email', verify, (req,res) => {
                                 phone: phone,
                                 roles: [role],
                                 pic: avatar,
-                                address: {addressLine: zip + " " + city + " " + street + " " + house_number, city: city, state: city + ' megye', street: street, house_number: house_number, postCode: zip},
+                                zip: zip,
+                                city: city,
+                                house_number: house_number,
+                                street: street,
                                 communication: communications
                             }});
-                            //console.log('Sent json');
+                            console.log('Sent json');
                         }else{
                             console.log('There\'s no such user');
                             res.status(400).json('There\'s no such user');
                         }           
                     }
                 });      
-            }        
+             }        
         }); 
     }else{
         console.log('You don\'t have the permission for this');
@@ -126,6 +152,49 @@ router.post('/block-user', verify, (req, res) => {
     }else{
         console.log('Nem admin');
         res.json({result: false});
+    }
+});
+
+router.post('/change/password', verify, (req, res) => {
+    console.log('Did I get called?');
+    console.log(req.body.user_id);
+    console.log(req.user.id);
+    // res.json({result: true});
+    if(req.user.role === 'admin' && req.body.new_pass === req.body.new_pass2){
+        const hash = bcrypt.hashSync(req.body.new_pass, saltRounds); 
+        db.query('UPDATE users SET pw_hash = ? WHERE user_id = ? ', [hash, req.body.user_id], (err, result) => {
+            if(err){
+                console.log(err);
+                res.status(400).json('Password update query fail');
+            }else{
+                console.log(result);
+                res.json({result: true});
+            }
+        });
+    }else{
+        console.log('Unauthorized, or passwords dont match');
+        res.status(400).json('Unauthorized pw change, or passwords dont match');
+    } 
+});
+
+router.post('/change/email', verify, (req, res) => {
+    console.log('Did I get called?');
+    console.log(req.body);
+    console.log(req.user.id);
+    // res.json({result: true});
+    if(req.user.role == 'admin'){
+        db.query('UPDATE users SET email = ? WHERE user_id = ? ', [req.body.email, req.body.user_id], (err, result) => {
+            if(err){
+                console.log(err);
+                res.status(400).json('Email update query fail');
+            }else{
+                console.log(result);
+                res.json({result: true});
+            }
+        });
+    }else{
+        console.log('Not admin');
+        res.status(400).json('Not admin');
     }
 });
 
