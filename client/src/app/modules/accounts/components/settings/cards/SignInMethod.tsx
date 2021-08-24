@@ -88,7 +88,7 @@ const SignInMethod: React.FC = () => {
     onSubmit: (values2, {setStatus}) => {     
       setLoading2(true)
       setTimeout((values) => {
-        changePassword(values2.currentPassword, values2.newPassword, values.passwordConfirmation, user.id).then(({data: {result}}) => {
+        changePassword(values2.currentPassword, values2.newPassword, values2.passwordConfirmation, user.id).then(({data: {result}}) => {
           setLoading2(false)
           if(result){
             setStatus();

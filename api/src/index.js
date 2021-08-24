@@ -5,6 +5,8 @@ const db = require('./database/db');
 const fs = require('fs');
 var nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
+const Joi = require('joi');
+const {registerValidate} = require('./helpers/validations');
 
 require('dotenv').config();
 
@@ -38,6 +40,73 @@ app.get('/insert', (req, res) => {
             }
         })
  
+});
+
+app.get('/test', (req, res) => {
+    const avatarValidate = Joi.object({
+        avatar: Joi.string().base64()
+    });
+
+    db.query("SELECT avatar FROM users WHERE user_id = ?", [8], (err, result) => {
+        if(err){
+            console.log(err);
+            res.send(err);
+        }else{
+            const { error, value } = avatarValidate.validate({
+                avatar: result[0].avatar.toString('base64')
+            });
+
+            if(!error){
+                console.log('Avatar is base64');
+            }else{
+                console.log('Error:')
+                // console.log(error);
+                res.json('Error:');
+            }
+        }
+    })
+});
+
+app.post('/validate', (req, res) => {
+    // db.query("SELECT zip FROM users WHERE user_id = ?", [8], (err, result) => {
+    //         if(err){
+    //             console.log(err);
+    //             res.send(err);
+    //         }else{
+    //             console.log(result[0].zip);
+    //             try {
+    //                 Joi.assert(result[0].zip, Joi.string())
+    //             } catch (error) {
+    //                 console.log(error);
+    //                 console.log('Hehe error');
+    //             }
+
+    //             console.log('Hehe error outside');
+    //             res.send(result[0].zip);
+    //         }
+    //     })
+    // console.log(`Number: ${number}`);
+    // console.log(`registerValidate: ${JSON.stringify(registerValidate)}`);
+    const { error, value } = registerValidate.validate({ 
+        email: req.body.email,
+        lastname: req.body.lastname,
+        firstname: req.body.firstname,
+        password: req.body.password,
+        zip: req.body.zip,
+        city: req.body.city,
+        street: req.body.street,
+        house_number: req.body.house_number,
+        phone: req.body.phone
+    });
+
+    if(error === undefined){
+        console.log(value);
+        res.json(value);
+    }else{
+        console.log('Error:')
+        console.log(error);
+        res.json(error);
+    }
 });
 
 app.get('/email', (req, res) => {
@@ -162,6 +231,25 @@ app.get('/createdb', (req, res) => {
             console.log('User Notifs created');
         }        
     });
+
+    sql = "INSERT INTO `notif_type`(`notif_name`) VALUES ('email'), ('sms'), ('push_up')";
+    db.query(sql, (err, result) =>{
+        if(err){
+            console.log('Notif type Insert something wrong: ' + err);
+        }else{
+            console.log('Inserted into notif_type');
+        }        
+    });
+
+    sql = "INSERT INTO `news_services`(`service_name`) VALUES ('Hulladékszállítás'), ('Lomtalanítás'), ('Hírek'), ('Valami'), ('PluszCucc')";
+    db.query(sql, (err, result) =>{
+        if(err){
+            console.log('news services Insert something wrong: ' + err);
+        }else{
+            console.log('Inserted into news_services');
+        }        
+    });
+
     res.send('DB Check log');
 });
 

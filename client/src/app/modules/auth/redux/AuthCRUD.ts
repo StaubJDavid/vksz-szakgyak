@@ -20,7 +20,7 @@ export const CHANGE_PASSWORD = `${API_URL}/api/user/change/password`
 export const CHANGE_EMAIL = `${API_URL}/api/user/change/email`
 
 //ADMIN STUFF
-export const GET_USER_BY_EMAIL = `${API_URL}/api/admin/get-user-by-email`
+export const GET_USER_BY_ID = `${API_URL}/api/admin/get-user-by-id`
 export const GET_USERS_URL = `${API_URL}/api/admin/get-users`
 export const USER_BLOCK_UNBLOCK = `${API_URL}/api/admin/block-user`
 export const ADMIN_CHANGE_PASSWORD = `${API_URL}/api/admin/change/password`
@@ -97,12 +97,12 @@ export function getUsers() {
   return axios.get<{users: UserModel[]}>(GET_USERS_URL)
 }
 
-export function userBlockUnblock(id:number, email:string) {
-  return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {id, email})
+export function userBlockUnblock(user_id:number, email:string) {//THIS
+  return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {user_id, email})
 }
 
-export function getUserById(id:number) {
-  return axios.post<{user: UserModel}>(GET_USER_BY_EMAIL, {id})
+export function getUserById(user_id:number) {//this
+  return axios.post<{user: UserModel}>(GET_USER_BY_ID, {user_id})
 }
 
 export function uploadAvatar(avatar:string, user_id:number) {
