@@ -6,12 +6,37 @@ const fs = require('fs');
 var nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
-const {registerValidate} = require('./helpers/validations');
+const { registerValidate } = require('./helpers/validations');
+
+/*Firebase Stuff */
+var admin = require('firebase-admin');
+
+var serviceAccount = require('./../src/pushup-test-vksz-firebase-adminsdk-hy1hr-b70f68fdc3.json');
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+var registrationToken = 'ft904rBfRqSVx6LbdAVQ1q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl';
+                                                                        //      -
+const payload = {
+    notification: {
+        title: "Your Title",
+        body: "Your Message!"
+    }
+};
+
+var options = {
+    priority: "high",
+    timeToLive: 60 * 60 * 24
+};
+
+/*Firebase Stuff */
 
 require('dotenv').config();
 
 const app = express();
-app.use('*',cors());
+app.use('*', cors());
 app.use(express.json({ limit: '12MB' }));
 
 var authRouter = require('./routes/auth');
@@ -29,42 +54,45 @@ app.get('/', (req, res) => {
 //Helpers/Tests
 
 app.get('/insert', (req, res) => {
-    db.query("INSERT INTO `users`(`email`, `last_name`, `first_name`, `pw_hash`, `zip`, `city`, `street`, `house_number`, `phone`, `role`) " + 
+    db.query("INSERT INTO `users`(`email`, `last_name`, `first_name`, `pw_hash`, `zip`, `city`, `street`, `house_number`, `phone`, `role`) " +
         "VALUES ('email','last_name','first_name','pw_hash','zip','city','street','house_number','phone','admin')", (err, result) => {
-            if(err){
+            if (err) {
                 console.log(err);
                 res.send(err);
-            }else{
+            } else {
                 console.log(result.insertId);
-                res.send({id: result.insertId});
+                res.send({ id: result.insertId });
             }
         })
- 
+
 });
 
 app.get('/test', (req, res) => {
-    const avatarValidate = Joi.object({
-        avatar: Joi.string().base64()
-    });
+    console.log('Heeeeee?');
 
-    db.query("SELECT avatar FROM users WHERE user_id = ?", [8], (err, result) => {
-        if(err){
-            console.log(err);
-            res.send(err);
-        }else{
-            const { error, value } = avatarValidate.validate({
-                avatar: result[0].avatar.toString('base64')
-            });
-
-            if(!error){
-                console.log('Avatar is base64');
-            }else{
-                console.log('Error:')
-                // console.log(error);
-                res.json('Error:');
-            }
-        }
-    })
+    const message = {
+        data: {
+          score: '850',
+          time: '2:45'
+        },
+        notification: {
+            title: "Your Title",
+            body: "Your Message!"
+        },
+        token: registrationToken
+      };
+      
+      // Send a message to the device corresponding to the provided
+      // registration token.
+      admin.messaging().send(message)
+        .then((response) => {
+          // Response is a message ID string.
+          console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+          console.log('Error sending message:', error);
+        });
+      
 });
 
 app.post('/validate', (req, res) => {
@@ -87,7 +115,7 @@ app.post('/validate', (req, res) => {
     //     })
     // console.log(`Number: ${number}`);
     // console.log(`registerValidate: ${JSON.stringify(registerValidate)}`);
-    const { error, value } = registerValidate.validate({ 
+    const { error, value } = registerValidate.validate({
         email: req.body.email,
         lastname: req.body.lastname,
         firstname: req.body.firstname,
@@ -99,10 +127,10 @@ app.post('/validate', (req, res) => {
         phone: req.body.phone
     });
 
-    if(error === undefined){
+    if (error === undefined) {
         console.log(value);
         res.json(value);
-    }else{
+    } else {
         console.log('Error:')
         console.log(error);
         res.json(error);
@@ -112,7 +140,7 @@ app.post('/validate', (req, res) => {
 app.get('/email', (req, res) => {
 
     // https://ethereal.email/create
-  // create reusable transporter object using the default SMTP transport
+    // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,
@@ -122,22 +150,22 @@ app.get('/email', (req, res) => {
         }
     });
 
-  var mailOptions = {
-    from: process.env.EMAIL_USERNAME,
-    to: 'davidkah20@gmail.com',
-    subject: 'Hello ✔',
-    text: 'Hello world?',
-    html: "<b>Hello world?</b>"
-  };
-  
-  transporter.sendMail(mailOptions, function(error, info){
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-      res.send(mailOptions);
-    }
-  }); 
+    var mailOptions = {
+        from: process.env.EMAIL_USERNAME,
+        to: 'davidkah20@gmail.com',
+        subject: 'Hello ✔',
+        text: 'Hello world?',
+        html: "<b>Hello world?</b>"
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+            res.send(mailOptions);
+        }
+    });
 });
 
 
@@ -155,16 +183,16 @@ app.get('/createdb', (req, res) => {
         '`phone` VARCHAR(20),' +
         '`role` ENUM(\'user\', \'admin\'),' +
         '`confirmed` BOOLEAN DEFAULT 0,' +
-        '`avatar` MEDIUMBLOB,' +       
+        '`avatar` MEDIUMBLOB,' +
         'PRIMARY KEY (`user_id`)' +
-    ');';
+        ');';
 
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('Something\'s wrong with the user table creation: ' + err);
-        }else{
+        } else {
             console.log('Users created');
-        }        
+        }
     });
 
     //News Services Table
@@ -172,14 +200,14 @@ app.get('/createdb', (req, res) => {
         '`service_id` INT NOT NULL AUTO_INCREMENT,' +
         '`service_name` VARCHAR(255),' +
         'PRIMARY KEY (`service_id`)' +
-    ');';
+        ');';
 
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('Something\'s wrong with the News Services table creation: ' + err);
-        }else{
+        } else {
             console.log('News Services created');
-        }        
+        }
     });
 
     //Notif Type Table
@@ -187,14 +215,14 @@ app.get('/createdb', (req, res) => {
         '`notif_id` INT NOT NULL AUTO_INCREMENT,' +
         '`notif_name` VARCHAR(255),' +
         'PRIMARY KEY (`notif_id`)' +
-    ');';
+        ');';
 
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('Something\'s wrong with the Notif Type table creation: ' + err);
-        }else{
+        } else {
             console.log('Notif Type created');
-        }        
+        }
     });
 
     //Blacklist Table
@@ -202,14 +230,14 @@ app.get('/createdb', (req, res) => {
         '`blacklist_id` INT NOT NULL AUTO_INCREMENT,' +
         '`email` VARCHAR(255),' +
         'FOREIGN KEY (blacklist_id) REFERENCES users(user_id)' +
-    ');';
+        ');';
 
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('Something\'s wrong with the Blacklist table creation: ' + err);
-        }else{
+        } else {
             console.log('Blacklist table created');
-        }        
+        }
     });
 
     //User Notif Table
@@ -219,40 +247,40 @@ app.get('/createdb', (req, res) => {
         '`service_id` INT NOT NULL,' +
         '`notif_email` BOOLEAN DEFAULT 0,' +
         '`notif_sms` BOOLEAN DEFAULT 0,' +
-        '`notif_push_up` BOOLEAN DEFAULT 0,'+
+        '`notif_push_up` BOOLEAN DEFAULT 0,' +
         'FOREIGN KEY (user_id) REFERENCES users(user_id), ' +
         'FOREIGN KEY (service_id) REFERENCES news_services(service_id) ' +
-    ');';
+        ');';
 
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('Something\'s wrong with the User Notifs table creation: ' + err);
-        }else{
+        } else {
             console.log('User Notifs created');
-        }        
+        }
     });
 
     sql = "INSERT INTO `notif_type`(`notif_name`) VALUES ('email'), ('sms'), ('push_up')";
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('Notif type Insert something wrong: ' + err);
-        }else{
+        } else {
             console.log('Inserted into notif_type');
-        }        
+        }
     });
 
     sql = "INSERT INTO `news_services`(`service_name`) VALUES ('Hulladékszállítás'), ('Lomtalanítás'), ('Hírek'), ('Valami'), ('PluszCucc')";
-    db.query(sql, (err, result) =>{
-        if(err){
+    db.query(sql, (err, result) => {
+        if (err) {
             console.log('news services Insert something wrong: ' + err);
-        }else{
+        } else {
             console.log('Inserted into news_services');
-        }        
+        }
     });
 
     res.send('DB Check log');
 });
 
-app.listen(process.env.PORT, () =>{
+app.listen(process.env.PORT, () => {
     console.log(`Listening to ${process.env.PORT}`);
 });
