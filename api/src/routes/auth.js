@@ -15,6 +15,7 @@ const Joi = require('joi');
 require('dotenv').config();
 //LOGIN:
 router.post('/login', (req, res) => {
+    console.log('Login eyyy');
     const { email, password} = req.body;
 
     const { error, value } = loginValidate.validate({ 
@@ -78,7 +79,7 @@ router.post('/login', (req, res) => {
 
 //Register
 router.post('/register', (req, res) => {
-    const {email, firstname, lastname, password, zip, city, street, house_number, phone} = req.body;
+    const {email, firstname, lastname, password, zip, city, street, house_number, phone, device_token} = req.body;
 
     const { error, value } = registerValidate.validate({ 
         email: email,
@@ -89,7 +90,8 @@ router.post('/register', (req, res) => {
         city: city,
         street: street,
         house_number: house_number,
-        phone: phone
+        phone: phone,
+        device_token: device_token
     });
 
     if(!error){
@@ -111,6 +113,7 @@ router.post('/register', (req, res) => {
                     phone: phone,
                     role: 'user',
                     avatar: avatarData,
+                    device_token: device_token
                 };
 
         let blacklisted = 0;

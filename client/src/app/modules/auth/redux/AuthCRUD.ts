@@ -2,6 +2,7 @@ import axios from 'axios'
 import {AuthModel} from '../models/AuthModel'
 import { UserCommunicationModel } from '../models/UserCommunicationModel'
 import {UserModel} from '../models/UserModel'
+import {NewsNotifsModel} from '../models/NewsNotifsModel'
 
 const API_URL = process.env.REACT_APP_API_URL || 'localhost:3001'
 
@@ -25,6 +26,7 @@ export const GET_USERS_URL = `${API_URL}/api/admin/get-users`
 export const USER_BLOCK_UNBLOCK = `${API_URL}/api/admin/block-user`
 export const ADMIN_CHANGE_PASSWORD = `${API_URL}/api/admin/change/password`
 export const ADMIN_CHANGE_EMAIL = `${API_URL}/api/admin/change/email`
+export const GET_NEWS_NOTIFS = `${API_URL}/api/admin/get-news-notifs`
 
 // Server should return AuthModel
 export function login(email: string, password: string) {
@@ -97,12 +99,16 @@ export function getUsers() {
   return axios.get<{users: UserModel[]}>(GET_USERS_URL)
 }
 
-export function userBlockUnblock(user_id:number, email:string) {//THIS
+export function userBlockUnblock(user_id:number, email:string) {
   return axios.post<{result: boolean}>(USER_BLOCK_UNBLOCK, {user_id, email})
 }
 
-export function getUserById(user_id:number) {//this
+export function getUserById(user_id:number) {
   return axios.post<{user: UserModel}>(GET_USER_BY_ID, {user_id})
+}
+
+export function getNewsNotifs() {
+  return axios.get<{news_notifs: NewsNotifsModel}>(GET_NEWS_NOTIFS)
 }
 
 export function uploadAvatar(avatar:string, user_id:number) {

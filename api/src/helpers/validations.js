@@ -23,6 +23,7 @@ const joi_house_number = Joi.string().min(1).max(10).required();
 const joi_phone = Joi.string().min(10).max(11).regex(/^\d+$/).required().messages({'string.pattern.base': `phone contains non numerical value`});
 const joi_avatar = Joi.string().base64();
 const joi_id = Joi.number();
+const joi_device_token = Joi.string().required(); 
 
 const registerValidate = Joi.object({
     email: joi_email,
@@ -33,7 +34,8 @@ const registerValidate = Joi.object({
     city: joi_city,
     street: joi_street,
     house_number: joi_house_number,
-    phone: joi_phone
+    phone: joi_phone,
+    device_token: joi_device_token
 });
 
 const loginValidate = Joi.object({

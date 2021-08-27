@@ -6,6 +6,7 @@ import {MenuTestPage} from '../pages/MenuTestPage'
 import {AdminBoard} from '../pages/AdminBoard'
 import {GetRole} from '../../_metronic/helpers/components/UserRole'
 import {UserProfile} from '../modules/accounts/components/UserProfile'
+import {SendUsersNotification} from '../modules/accounts/components/SendUsersNotification'
 
 
 export function PrivateRoutes() {
@@ -29,6 +30,7 @@ export function PrivateRoutes() {
         <Route path='/menu-test' component={MenuTestPage} />
         <Route path='/admin-board' component={AdminBoard} />
         {GetRole() === 'admin'?(<Route path='/user/:email' component={UserProfile} />):(<><Redirect exact from='/' to='/dashboard' /><Redirect exact from='/user' to='/dashboard' /></>)}
+        {GetRole() === 'admin'?(<Route path='/send-users-notification' component={SendUsersNotification} />):(<><Redirect exact from='/' to='/dashboard' /><Redirect exact from='/user' to='/dashboard' /></>)}
         <Redirect from='/auth' to='/dashboard' />
         {GetRole() === 'user'?(<Redirect exact from='/' to='/dashboard' />):(<Redirect exact from='/' to='/admin-board' />)}
         <Redirect to='error/404' />

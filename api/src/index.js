@@ -9,27 +9,29 @@ const Joi = require('joi');
 const { registerValidate } = require('./helpers/validations');
 
 /*Firebase Stuff */
-var admin = require('firebase-admin');
+// var admin = require('firebase-admin');
 
-var serviceAccount = require('./../src/pushup-test-vksz-firebase-adminsdk-hy1hr-b70f68fdc3.json');
+// var serviceAccount = require('./../src/pushup-test-vksz-firebase-adminsdk-hy1hr-b70f68fdc3.json');
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount)
+// });
 
-var registrationToken = 'ft904rBfRqSVx6LbdAVQ1q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl';
+//var registrationToken1 = 'ft904rBfRqSVx6LbdAVQ1q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl';
                                                                         //      -
-const payload = {
-    notification: {
-        title: "Your Title",
-        body: "Your Message!"
-    }
-};
+//var registrationToken2 = 'dskaoMgBRtSRVew4atbs-k:APA91bEAqsNEYoZ8hawlWpSyxFJI8A7eCShCep5d3bpSTDXwn9gALuewusgd-BFD7Lf0cfYw9V_flrIFKV1so3xdy5CLcipEKnJ4EWFadVAto-GGwohSGJrrhoZEg8Xrm-UDPqqXal8T';
+//                                                                 -       -                                                - -                                                          -        
+// const payload = {
+//     notification: {
+//         title: "Your Title",
+//         body: "Your Message!"
+//     }
+// };
 
-var options = {
-    priority: "high",
-    timeToLive: 60 * 60 * 24
-};
+// var options = {
+//     priority: "high",
+//     timeToLive: 60 * 60 * 24
+// };
 
 /*Firebase Stuff */
 
@@ -68,30 +70,54 @@ app.get('/insert', (req, res) => {
 });
 
 app.get('/test', (req, res) => {
-    console.log('Heeeeee?');
+    // console.log('Heeeeee?');
 
-    const message = {
-        data: {
-          score: '850',
-          time: '2:45'
-        },
-        notification: {
-            title: "Your Title",
-            body: "Your Message!"
-        },
-        token: registrationToken
-      };
+    // const message = {
+    //     data: {
+    //       score: '850',
+    //       time: '2:45'
+    //     },
+    //     notification: {
+    //         title: "Haha teszt notification message",
+    //         body: "This is me message bye!"
+    //     },
+    //     token: registrationToken
+    //   };
       
-      // Send a message to the device corresponding to the provided
-      // registration token.
-      admin.messaging().send(message)
-        .then((response) => {
-          // Response is a message ID string.
-          console.log('Successfully sent message:', response);
-        })
-        .catch((error) => {
-          console.log('Error sending message:', error);
-        });
+    //   // Send a message to the device corresponding to the provided
+    //   // registration token.
+    //   admin.messaging().send(message)
+    //     .then((response) => {
+    //       // Response is a message ID string.
+    //       console.log('Successfully sent message:', response);
+    //     })
+    //     .catch((error) => {
+    //       console.log('Error sending message:', error);
+    //     });
+
+    //SendToMultipleDevices
+    // const registrationTokens = [
+    //     'ft904rBfRqSVx6LbdAVQ1q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl',
+    //     'dskaoMgBRtSRVew4atbs-k:APA91bEAqsNEYoZ8hawlWpSyxFJI8A7eCShCep5d3bpSTDXwn9gALuewusgd-BFD7Lf0cfYw9V_flrIFKV1so3xdy5CLcipEKnJ4EWFadVAto-GGwohSGJrrhoZEg8Xrm-UDPqqXal8T'
+    // ];
+      
+    // const message = {
+    //     data: {score: '850', time: '2:45'},
+    //     notification: {
+    //         title: "Haha teszt notification message",
+    //         body: "This is me message bye!"
+    //     },
+    //     tokens: registrationTokens,
+    //   };
+      
+    //   admin.messaging().sendMulticast(message)
+    //     .then((response) => {
+    //       console.log(response.successCount + ' messages were sent successfully');
+    //       res.json(response);
+    //     }).catch((error) => {
+    //         console.log(error);
+    //         res.json(error);
+    //     });
       
 });
 
@@ -184,6 +210,7 @@ app.get('/createdb', (req, res) => {
         '`role` ENUM(\'user\', \'admin\'),' +
         '`confirmed` BOOLEAN DEFAULT 0,' +
         '`avatar` MEDIUMBLOB,' +
+        '`device_token` VARCHAR(255),' +
         'PRIMARY KEY (`user_id`)' +
         ');';
 
@@ -260,7 +287,7 @@ app.get('/createdb', (req, res) => {
         }
     });
 
-    sql = "INSERT INTO `notif_type`(`notif_name`) VALUES ('email'), ('sms'), ('push_up')";
+    sql = "INSERT INTO `notif_type`(`notif_name`) VALUES ('notif_email'), ('notif_sms'), ('notif_push_up')";
     db.query(sql, (err, result) => {
         if (err) {
             console.log('Notif type Insert something wrong: ' + err);
