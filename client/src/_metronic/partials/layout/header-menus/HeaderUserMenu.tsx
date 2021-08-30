@@ -22,8 +22,7 @@ const HeaderUserMenu: FC = () => {
 
           <div className='d-flex flex-column'>
             <div className='fw-bolder d-flex align-items-center fs-5'>
-              {user.firstname} {user.lastname}
-              <span className='badge badge-light-success fw-bolder fs-8 px-2 py-1 ms-2'>Pro</span>
+              {user.firstname} {user.lastname} 
             </div>
             <a href='#' className='fw-bold text-muted text-hover-primary fs-7'>
               {user.email}
@@ -32,8 +31,10 @@ const HeaderUserMenu: FC = () => {
         </div>
       </div>
 
+      {/*
       <div className='separator my-2'></div>
 
+      
       <div className='menu-item px-5'>
         <Link to={'/crafted/pages/profile'} className='menu-link px-5'>
           My Profile
@@ -114,10 +115,10 @@ const HeaderUserMenu: FC = () => {
           My Statements
         </a>
       </div>
-
+      */}
       <div className='separator my-2'></div>
 
-      <Languages />
+      {/*<Languages />*/}
 
       <div className='menu-item px-5 my-1'>
         <Link to='/crafted/account/settings' className='menu-link px-5'>

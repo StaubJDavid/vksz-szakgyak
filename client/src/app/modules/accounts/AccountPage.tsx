@@ -27,19 +27,20 @@ const AccountPage: React.FC = () => {
   
   return (
     <>
-      <AccountHeader />
+      {/*<AccountHeader />*/}
       <Switch>
+        {/*
         <Route path='/crafted/account/overview'>
           <PageTitle breadcrumbs={accountBreadCrumbs}>Overview</PageTitle>
           <Overview />
-        </Route>
+        </Route>*/}
         <Route path='/crafted/account/settings'>
           <PageTitle breadcrumbs={accountBreadCrumbs}>Settings</PageTitle>
           <Settings />
         </Route>
 
-        <Redirect from='/crafted/account' exact={true} to='/crafted/account/overview' />
-        <Redirect to='/crafted/account/overview' />
+        <Redirect from='/crafted/account' to='/crafted/account/settings' />
+        {/*<Redirect to='/crafted/account/overview' />*/}
       </Switch>
     </>
   )

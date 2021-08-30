@@ -22,7 +22,7 @@ const joi_street = Joi.string().min(1).max(35).required();
 const joi_house_number = Joi.string().min(1).max(10).required();
 const joi_phone = Joi.string().min(10).max(11).regex(/^\d+$/).required().messages({'string.pattern.base': `phone contains non numerical value`});
 const joi_avatar = Joi.string().base64();
-const joi_id = Joi.number();
+const joi_id = Joi.number().required();
 const joi_device_token = Joi.string().required(); 
 
 const registerValidate = Joi.object({
@@ -82,6 +82,20 @@ const idValidate = Joi.object({
     req_body_user_id: joi_id
 });
 
+const sendUsersNotifValidate = Joi.object({
+    service_id: joi_id,
+    notif_id: joi_id,
+    title: Joi.string(),
+    message: Joi.string()
+});
+
+const sendUserNotifValidate = Joi.object({
+    notif_id: joi_id,
+    title: Joi.string(),
+    message: Joi.string(),
+    user_id: joi_id
+});
+
 module.exports.registerValidate = registerValidate
 module.exports.loginValidate = loginValidate
 module.exports.emailValidate = emailValidate
@@ -90,3 +104,5 @@ module.exports.avatarValidate = avatarValidate
 module.exports.idValidate = idValidate
 module.exports.changeEmailValidate = changeEmailValidate
 module.exports.changePasswordValidate = changePasswordValidate
+module.exports.sendUsersNotifValidate = sendUsersNotifValidate
+module.exports.sendUserNotifValidate = sendUserNotifValidate

@@ -9,19 +9,20 @@ export function MenuInner() {
   const intl = useIntl()
   return (
     <>
-      {/* DASHBOARD */}
-      <MenuItem title={intl.formatMessage({id: 'MENU.DASHBOARD'})} to='/dashboard' />
-      {/* LAYOUT BUILDER */}
+      {/* DASHBOARD */}    
+      {GetRole() === 'user'?<MenuItem title={intl.formatMessage({id: 'MENU.DASHBOARD'})} to='/dashboard' />:<></>}
+
+      {/*
+      
       <MenuItem title='Layout Builder' to='/builder' />
 
-      {/* CRAFTED */}
+
       <MenuInnerWithSub
         title='Crafted'
         to='/crafted'
         menuPlacement='bottom-start'
         menuTrigger='click'
       >
-        {/* PAGES */}
         <MenuInnerWithSub
           title='Pages'
           to='/crafted/pages'
@@ -61,7 +62,6 @@ export function MenuInner() {
           </MenuInnerWithSub>
         </MenuInnerWithSub>
 
-        {/* ACCOUNT */}
         <MenuInnerWithSub
           title='Accounts'
           to='/crafted/accounts'
@@ -74,7 +74,6 @@ export function MenuInner() {
           <MenuItem to='/crafted/account/settings' title='Settings' hasBullet={true} />
         </MenuInnerWithSub>
 
-        {/* ERRORS */}
         <MenuInnerWithSub
           title='Errors'
           to='/error'
@@ -87,7 +86,6 @@ export function MenuInner() {
           <MenuItem to='/error/500' title='Error 500' hasBullet={true} />
         </MenuInnerWithSub>
 
-        {/* Widgets */}
         <MenuInnerWithSub
           title='Widgets'
           to='/crafted/widgets'
@@ -104,9 +102,8 @@ export function MenuInner() {
           <MenuItem to='/crafted/widgets/feeds' title='Feeds' hasBullet={true} />
         </MenuInnerWithSub>
       </MenuInnerWithSub>
-      {/* APPS */}
+
       <MenuInnerWithSub title='Apps' to='/apps' menuPlacement='bottom-start' menuTrigger='click'>
-        {/* PAGES */}
         <MenuInnerWithSub
           title='Chat'
           to='/apps/chat'
@@ -120,7 +117,7 @@ export function MenuInner() {
           <MenuItem to='/apps/chat/drawer-chat' title='Drawer Chart' hasBullet={true} />
         </MenuInnerWithSub>
       </MenuInnerWithSub>
-      {/* MEGA MENU */}
+
       <MenuInnerWithSub
         isMega={true}
         title='Mega menu'
@@ -130,8 +127,13 @@ export function MenuInner() {
       >
         <MegaMenu />
       </MenuInnerWithSub>
+      */}
+
       {/* ADMIN BOARD */}
       {GetRole() === 'admin'?<MenuItem title='Admin Dashboard' to='/admin-board' />:<></>}
+
+      {/* ADMIN NOTIFICATIONS BOARD */}
+      {GetRole() === 'admin'?<MenuItem title='Admin Notifications' to='/send-users-notification' />:<></>}
     </>
   )
 }

@@ -22,9 +22,10 @@ const Topbar: FC = () => {
       {/* <div className={clsx('d-flex align-items-stretch', toolbarButtonMarginClass)}>
         <Search />
       </div> */}
+      
       {/* Activities */}
-      <div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
-        {/* begin::Drawer toggle */}
+
+      {/*<div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
         <div
           className={clsx('btn btn-icon btn-active-light-primary', toolbarButtonHeightClass)}
           id='kt_activities_toggle'
@@ -34,11 +35,10 @@ const Topbar: FC = () => {
             className={toolbarButtonIconSizeClass}
           />
         </div>
-        {/* end::Drawer toggle */}
-      </div>
+      </div>*/}
+
       {/* Quick links */}
-      <div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
-        {/* begin::Menu wrapper */}
+      {/*<div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
         <div
           className={clsx('btn btn-icon btn-active-light-primary', toolbarButtonHeightClass)}
           data-kt-menu-trigger='click'
@@ -52,12 +52,11 @@ const Topbar: FC = () => {
           />
         </div>
         <QuickLinks />
-        {/* end::Menu wrapper */}
-      </div>
+      </div>*/}
 
       {/* CHAT */}
+      {/*
       <div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
-        {/* begin::Menu wrapper */}
         <div
           className={clsx(
             'btn btn-icon btn-active-light-primary position-relative',
@@ -72,12 +71,11 @@ const Topbar: FC = () => {
 
           <span className='bullet bullet-dot bg-success h-6px w-6px position-absolute translate-middle top-0 start-50 animation-blink'></span>
         </div>
-        {/* end::Menu wrapper */}
-      </div>
+      </div>*/}
 
       {/* NOTIFICATIONS */}
-      <div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
-        {/* begin::Menu- wrapper */}
+
+      {/*<div className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}>
         <div
           className={clsx(
             'btn btn-icon btn-active-light-primary position-relative',
@@ -94,8 +92,7 @@ const Topbar: FC = () => {
           />
         </div>
         <HeaderNotificationsMenu />
-        {/* end::Menu wrapper */}
-      </div>
+      </div>*/}
 
       {/* begin::User */}
       <div

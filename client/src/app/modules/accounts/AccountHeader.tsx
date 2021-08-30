@@ -59,6 +59,7 @@ const AccountHeader: React.FC = () => {
 
         <div className='d-flex overflow-auto h-55px'>
           <ul className='nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bolder flex-nowrap'>
+            {/*
             <li className='nav-item'>
               <Link
                 className={
@@ -69,7 +70,7 @@ const AccountHeader: React.FC = () => {
               >
                 Overview
               </Link>
-            </li>
+              </li>*/}
             <li className='nav-item'>
               <Link
                 className={

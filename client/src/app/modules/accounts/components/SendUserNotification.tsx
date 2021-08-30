@@ -2,7 +2,7 @@
 import React, {FC, useState, useEffect, useRef} from 'react'
 import {UserModel} from '../../auth/models/UserModel'
 import {NewsNotifsModel} from '../../auth/models/NewsNotifsModel'
-import {getNewsNotifs, sendUsersNotif} from '../../auth/redux/AuthCRUD'
+import {getNewsNotifs, sendUserNotif} from '../../auth/redux/AuthCRUD'
 import {Link} from 'react-router-dom'
 import {PFP} from '../../../../_metronic/helpers'
 import {ProfileDetails} from './settings/cards/ProfileDetails'
@@ -15,8 +15,11 @@ import { UserPasswordEmail } from './settings/cards/UserPasswordEmail'
 import { Editor } from '@tinymce/tinymce-react';
 
 
+type Props = {
+  user_id: number
+}
 //service_id:number, notif_id:number, title:string, message:string
-const SendUsersNotification: FC = () => {
+const SendUserNotification: FC<Props> = ({user_id}) => {
   function sendNotification(){
     setNotifSuccess('');
     setNotifError('');
@@ -25,7 +28,7 @@ const SendUsersNotification: FC = () => {
     // console.log(notifOption);
     // console.log(textInput.current.value);
     // console.log(editorRef.current.getContent());
-    sendUsersNotif(serviceOption!, notifOption!, textInput.current.value, editorRef.current.getContent())
+    sendUserNotif(notifOption!, textInput.current.value, editorRef.current.getContent(), user_id)
           .then(({data: {result}}) => {
             if(result){
               setNotifSuccess('Notifications sent');
@@ -41,11 +44,6 @@ const SendUsersNotification: FC = () => {
   }
   const [sendNotifError, setNotifError] = useState<string>('');
   const [sendNotifSuccess, setNotifSuccess] = useState<string>('');
-
-  const [serviceOption,setServiceOption] = useState<number>()
-  function handleServiceChange(event:any){
-    setServiceOption(event.target.value)
-  }
 
   const [notifOption,setNotifOption] = useState<number>()
   function handleNotifChange(event:any){
@@ -82,23 +80,10 @@ const SendUsersNotification: FC = () => {
 
 
   return isLoading ? <LayoutSplashScreen /> : (
-    <div className='card'>
+    <div className='card mb-5 mb-xl-10'>
     <table className='table table-row-dashed table-row-gray-300 align-middle gs-7 gy-4'>
       <tbody>
         <tr>
-          <td>
-            <div>
-              <div>
-                <label>Service type</label>
-                <select name="serviceOption" onChange={handleServiceChange} className="form-select form-select-solid" data-control="select2" data-placeholder="Select an option">
-                    <option key='' value=''></option>
-                    {news_notifs?.news_services.map(ns => {
-                      return <option key={ns.service_name} value={ns.service_id}>{ns.service_name}</option>
-                    })}
-                </select>
-              </div>
-            </div>
-          </td>
           <td>
             <div>
               <div>
@@ -162,4 +147,4 @@ const SendUsersNotification: FC = () => {
   
 }
 
-export {SendUsersNotification}
+export {SendUserNotification}

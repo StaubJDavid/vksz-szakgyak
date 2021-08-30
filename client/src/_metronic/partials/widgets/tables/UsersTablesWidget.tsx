@@ -44,6 +44,15 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
     })
   }
 
+  function onSendMessageClick(id:number){
+    // console.log('Clicked');
+    let index = users.findIndex((element:UserModel) => element.id === id);
+    // console.log(users[index]);
+    history.push({
+      pathname: `/send-user-notification/${users[index].id}`
+    })
+  }
+
   function updateData(user:UserModel){
     let index = users.findIndex((element:UserModel) => element.email === user.email)
     
@@ -115,8 +124,8 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                   <div className='d-flex justify-content-center flex-shrink-0'>
                     <a                   
                       //href=''
-                      onClick={() => {console.log(u.id)}}
-                      className='btn btn-icon btn-bg-light btn-active-color-primary btn-sm'
+                      onClick={() => {onSendMessageClick(u.id);}}
+                      className='btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2'
                     >
                       <KTSVG path='/media/icons/duotone/Communication/Outgoing-mail.svg' className='svg-icon-3' />
                     </a>                   

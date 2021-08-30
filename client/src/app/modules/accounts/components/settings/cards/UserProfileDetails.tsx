@@ -168,8 +168,29 @@ const UserProfileDetails: React.FC<Props> = ({id}) => {
       </div>
 
       <div id='kt_account_profile_details' className='collapse show'>
+        
         <form onSubmit={formik.handleSubmit} noValidate className='form'>
           <div className='card-body border-top p-9'>
+
+          <div className='row mb-6'>
+            <label className='col-sm-2 col-form-label fw-bold fs-6'>
+              <span className=''>User ID:</span>
+            </label>
+
+            <div className='col-sm-2 col-form-label fw-bold fs-6'>
+                <span className='fw-bolder fs-6 text-dark'>{user?.id}</span>
+            </div>
+          </div>
+
+          <div className='row mb-6'>
+            <label className='col-sm-2 col-form-label fw-bold fs-6'>
+              <span className=''>Email:</span>
+            </label>
+
+            <div className='col-lg-8 col-form-label fw-bold fs-6'>
+                <span className='fw-bolder fs-6 text-dark'>{user?.email}</span>
+            </div>
+          </div>
             
           <div className='row mb-6'>
               <label className='col-sm-2 col-form-label fw-bold fs-6'>Avatar</label>

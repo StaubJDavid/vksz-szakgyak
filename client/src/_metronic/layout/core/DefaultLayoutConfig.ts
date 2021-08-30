@@ -27,13 +27,13 @@ export const DefaultLayoutConfig: ILayout = {
     display: true, // Set true|false to show or hide Mega Menu
   },
   aside: {
-    display: true,
+    display: false,
     theme: 'dark',
     menu: 'main',
     fixed: true,
-    minimized: false,
-    minimize: true,
-    hoverable: true,
+    minimized: true,
+    minimize: false,
+    hoverable: false,
     menuIcon: 'svg',
   },
   content: {
@@ -41,7 +41,7 @@ export const DefaultLayoutConfig: ILayout = {
     layout: 'default',
   },
   toolbar: {
-    display: true, // Display toolbar
+    display: false, // Display toolbar
     width: 'fluid', // Set fixed|fluid to change width type,
     fixed: {
       desktop: true,

@@ -5,7 +5,7 @@ const verify = require('../helpers/authVerify');
 const bcrypt = require('bcrypt');
 var nodemailer = require('nodemailer');
 const saltRounds = 10;
-const {changeEmailValidate, changePasswordValidate, idValidate} = require('../helpers/validations');
+const {changeEmailValidate, changePasswordValidate, idValidate, sendUsersNotifValidate, sendUserNotifValidate} = require('../helpers/validations');
 
 var admin = require('firebase-admin');
 
@@ -269,150 +269,80 @@ router.post('/change/email', verify, (req, res) => {
 });
 
 router.post('/send/users/notification', verify, (req, res) => {
-    const {service_id, notif_id, title, message} = req.body;
+    let {service_id, notif_id, title, message} = req.body;
+    console.log(req.body);
 
-    //Send the same notification to every user who is "subscribed" to the given service_id and notif_id from req.body
-    if(req.user.role === 'admin'){
-        db.query('SELECT t.*, u.email, u.phone, u.device_token, ns.service_name, nt.notif_id FROM (select user_id, service_id, \'notif_email\' col, notif_email value ' +
-        'from user_notifs '+
-        'union all '+
-        'select user_id, service_id, \'notif_sms\' col, notif_sms value '+
-        'from user_notifs  '+
-        'union all '+
-        'select user_id, service_id, \'notif_push_up\' col, notif_push_up value '+
-        'from user_notifs) as t LEFT JOIN users u ON t.user_id = u.user_id '+
-        'LEFT JOIN news_services ns ON t.service_id = ns.service_id '+
-        'LEFT JOIN notif_type nt ON t.col = nt.notif_name '+
-        'WHERE nt.notif_id = ? && t.service_id = ? && value = 1', [notif_id, service_id], (err, results) => {
-            if(err){
-                console.log(err);
-                res.status(400).json(err);
-            }else{
-                //Send to "subscribed" people Push Up
-                if(notif_id === 3){
-                    console.log('push up notif');
-                    const emails = [];
-                    results.map(r => {
-                        emails.push({email: r.email, device_token: r.device_token});
-                    })
-                    const device_tokens = [];
-                    emails.map(d => {
-                        if(d.device_token){
-                            device_tokens.push(d.device_token);
-                        }               
-                    });
-        
-                    const push_up_message = {
-                        notification: {
-                            title: title,
-                            body: message
-                        },
-                        tokens: device_tokens,
-                      };
-                      
-                      admin.messaging().sendMulticast(push_up_message)
-                        .then((response) => {
-                          console.log(response.successCount + ' messages were sent successfully');
-                          res.json(response);
-                        }).catch((error) => {
-                            console.log(error);
-                            res.json(error);
-                        });
-                }
-                
-                //Send to "subscribed" people email
-                if(notif_id === 1){
-                    console.log('Email notif');
-    
-                    const emails = [];
-                    results.map(r => {
-                        emails.push(r.email);
-                    })
-    
-                    const transporter = nodemailer.createTransport({
-                        host: process.env.EMAIL_HOST,
-                        port: process.env.EMAIL_PORT,
-                        auth: {
-                            user: process.env.EMAIL_USERNAME,
-                            pass: process.env.EMAIL_PASSWORD
-                        }
-                    });
-    
-                    var mailOptions = {
-                        from: process.env.EMAIL_USERNAME,
-                        subject: title,
-                        html: `<b>${message}</b>`
-                    };
-                
-                    
-                    emails.forEach(function (to, i , array) {
-                        mailOptions.to = to;
-                    
-                        transporter.sendMail(mailOptions, function (err) {
-                            if (err) { 
-                                console.log('Sending to ' + to + ' failed: ' + err);
-                                return;
-                            }/* else { 
-                                console.log('Sent to ' + to);
-                            }*/
-                    
-                            if (i === emails.length - 1) { mailOptions.transport.close(); }
-                        });
-                    });
-                    console.log('Sent out emails');
-                    res.json('Sent out emails');
-                }
-    
-                //Send sms to "subscribed" users
-                if(notif_id === 2){
-                    console.log('sms notif');
-                    res.json('sms notif');
-                }
-            }
-        });
-    }else{
-        console.log('Not admin');
-        res.status(400).json('Not admin');
-    }
-});
+    service_id = parseInt(req.body.service_id, 10);
+    notif_id = parseInt(req.body.notif_id, 10);
 
-router.post('/send/user/notification', verify, (req, res) => {
-    const {notif_id, title, message} = req.body;
-
-    if(req.user.role === 'admin'){
-        db.query('SELECT user_id, email, phone, device_token FROM users WHERE user_id = ?', [req.body.user_id], (err, results) => {
-            if(err){
-                console.log('Send/User/Notification first query error');
-                res.status(400).json(err);
-            }else{
-                if(results.length === 1){
-
-                    //Push up notif
+    const { error, value } = sendUsersNotifValidate.validate({
+        service_id: service_id,
+        notif_id: notif_id,
+        title: title,
+        message: message
+    });
+    console.log('If elott');
+    if(!error){
+        console.log('If utan nem error');
+        //Send the same notification to every user who is "subscribed" to the given service_id and notif_id from req.body
+        if(req.user.role === 'admin'){
+            db.query('SELECT t.*, u.email, u.phone, u.device_token, ns.service_name, nt.notif_id FROM (select user_id, service_id, \'notif_email\' col, notif_email value ' +
+            'from user_notifs '+
+            'union all '+
+            'select user_id, service_id, \'notif_sms\' col, notif_sms value '+
+            'from user_notifs  '+
+            'union all '+
+            'select user_id, service_id, \'notif_push_up\' col, notif_push_up value '+
+            'from user_notifs) as t LEFT JOIN users u ON t.user_id = u.user_id '+
+            'LEFT JOIN news_services ns ON t.service_id = ns.service_id '+
+            'LEFT JOIN notif_type nt ON t.col = nt.notif_name '+
+            'WHERE nt.notif_id = ? && t.service_id = ? && value = 1', [notif_id, service_id], (err, results) => {
+                if(err){
+                    console.log(err);
+                    res.status(400).json({result: false});
+                }else{
+                    //Send to "subscribed" people Push Up
                     if(notif_id === 3){
                         console.log('push up notif');
-            
+                        const emails = [];
+                        results.map(r => {
+                            emails.push({email: r.email, device_token: r.device_token});
+                        })
+                        const device_tokens = [];
+                        emails.map(d => {
+                            if(d.device_token){
+                                device_tokens.push(d.device_token);
+                            }               
+                        });
+                        
+                        message = message.replace(/<(.|\n)*?>/g, '');
                         const push_up_message = {
                             notification: {
                                 title: title,
                                 body: message
                             },
-                            token: results[0].device_token,
-                          };
-                          
-                          admin.messaging().send(push_up_message)
+                            tokens: device_tokens,
+                        };
+                        
+                        admin.messaging().sendMulticast(push_up_message)
                             .then((response) => {
-                              console.log('Sent messages response: ', response);
-                              res.json(response);
+                            console.log(response.successCount + ' messages were sent successfully');
+                            res.json({result: true});
                             }).catch((error) => {
                                 console.log(error);
-                                res.json(error);
+                                res.status(400).json({result: false});
                             });
                     }
                     
                     //Send to "subscribed" people email
                     if(notif_id === 1){
                         console.log('Email notif');
-        
+
+                        const emails = [];
+                        results.map(r => {
+                            emails.push(r.email);
+                        })
+
                         const transporter = nodemailer.createTransport({
                             host: process.env.EMAIL_HOST,
                             port: process.env.EMAIL_PORT,
@@ -421,42 +351,147 @@ router.post('/send/user/notification', verify, (req, res) => {
                                 pass: process.env.EMAIL_PASSWORD
                             }
                         });
-        
+
                         var mailOptions = {
                             from: process.env.EMAIL_USERNAME,
                             subject: title,
-                            to: results[0].email,
                             html: `<b>${message}</b>`
                         };
-                     
-                        transporter.sendMail(mailOptions, function (err,info) {
-                            if (err) { 
-                                console.log('Sending to ' + to + ' failed: ' + err);
-                                res.status(400).json(err);
-                            } else { 
-                                console.log('Sent out email: ', info);
-                                res.json(info);
-                                mailOptions.transport.close();
-                            }
+                    
+                        
+                        emails.forEach(function (to, i , array) {
+                            mailOptions.to = to;
+                        
+                            transporter.sendMail(mailOptions, function (err) {
+                                if (err) { 
+                                    console.log('Sending to ' + to + ' failed: ' + err);
+                                    return;
+                                }/* else { 
+                                    console.log('Sent to ' + to);
+                                }*/
+                        
+                                if (i === emails.length - 1) { mailOptions.transport.close(); }
+                            });
                         });
-   
+                        console.log('Sent out emails');
+                        res.json({result: true});
                     }
-        
+
                     //Send sms to "subscribed" users
                     if(notif_id === 2){
                         console.log('sms notif');
-                        res.json('sms notif');
+                        res.json({result: true});
                     }
-                }else{
-                    console.log('No such user found Id: ', req.body.user_id);
-                    res.status(400).json('No such user found Id: '+ req.body.user_id);
                 }
-            }
-        });
+            });
+        }else{
+            console.log('Not admin');
+            res.status(400).json('Not admin');
+        }
     }else{
-        console.log('Not admin');
-        res.status(400).json('Not admin');
-    }
+        console.log('Error:')
+        console.log(error);
+        res.status(400).json(error.message);
+    }  
+});
+
+router.post('/send/user/notification', verify, (req, res) => {
+    let {notif_id, title, message, user_id} = req.body;
+    user_id = parseInt(req.body.user_id, 10);
+    notif_id = parseInt(req.body.notif_id, 10);
+
+    const { error, value } = sendUserNotifValidate.validate({
+        notif_id: notif_id,
+        title: title,
+        message: message,
+        user_id: user_id
+    });
+
+    if(!error){
+        if(req.user.role === 'admin'){
+            db.query('SELECT user_id, email, phone, device_token FROM users WHERE user_id = ?', [req.body.user_id], (err, results) => {
+                if(err){
+                    console.log('Send/User/Notification first query error');
+                    res.status(400).json(err);
+                }else{
+                    if(results.length === 1){
+
+                        //Push up notif
+                        if(notif_id === 3){
+                            console.log('push up notif');
+
+                            message = message.replace(/<(.|\n)*?>/g, '');
+                            const push_up_message = {
+                                notification: {
+                                    title: title,
+                                    body: message
+                                },
+                                token: results[0].device_token,
+                            };
+                            
+                            admin.messaging().send(push_up_message)
+                                .then((response) => {
+                                console.log('Sent messages response: ', response);
+                                res.json({result: true});
+                                }).catch((error) => {
+                                    console.log(error);
+                                    res.status(400).json(error);
+                                });
+                        }
+                        
+                        //Send to "subscribed" people email
+                        if(notif_id === 1){
+                            console.log('Email notif');
+            
+                            const transporter = nodemailer.createTransport({
+                                host: process.env.EMAIL_HOST,
+                                port: process.env.EMAIL_PORT,
+                                auth: {
+                                    user: process.env.EMAIL_USERNAME,
+                                    pass: process.env.EMAIL_PASSWORD
+                                }
+                            });
+            
+                            var mailOptions = {
+                                from: process.env.EMAIL_USERNAME,
+                                subject: title,
+                                to: results[0].email,
+                                html: `<b>${message}</b>`
+                            };
+                        
+                            transporter.sendMail(mailOptions, function (err,info) {
+                                if (err) { 
+                                    console.log('Sending to ' + to + ' failed: ' + err);
+                                    res.status(400).json(err);
+                                } else { 
+                                    console.log('Sent out email: ', info);
+                                    res.json({result: true});
+                                    mailOptions.transport.close();
+                                }
+                            });
+    
+                        }
+            
+                        //Send sms to "subscribed" users
+                        if(notif_id === 2){
+                            console.log('sms notif');
+                            res.json({result: true});
+                        }
+                    }else{
+                        console.log('No such user found Id: ', req.body.user_id);
+                        res.status(400).json('No such user found Id: '+ req.body.user_id);
+                    }
+                }
+            });
+        }else{
+            console.log('Not admin');
+            res.status(400).json('Not admin');
+        }
+    }else{
+        console.log('Error:')
+        console.log(error);
+        res.status(400).json(error.message);
+    }      
 });
 
 // /api/admin/get-news-notifs

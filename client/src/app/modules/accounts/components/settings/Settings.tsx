@@ -9,17 +9,17 @@ import * as auth from '../../../auth/redux/AuthRedux'
 import {useSelector} from 'react-redux'
 
 export function Settings() {
-  const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
-  const stuff2 = JSON.parse(stuff);
-  const user = stuff2.payload.user.auth.user;
+  // const stuff = JSON.stringify(useSelector(auth.actions.fulfillUser));
+  // const stuff2 = JSON.parse(stuff);
+  // const user = stuff2.payload.user.auth.user;
   return (
     <>
       <ProfileDetails />
       <SignInMethod />
-      <ConnectedAccounts />
-      <EmailPreferences />
       <Notifications />
-      <DeactivateAccount />
+      {/*<DeactivateAccount />
+      <ConnectedAccounts />
+      <EmailPreferences />*/}
     </>
   )
 }

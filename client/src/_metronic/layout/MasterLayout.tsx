@@ -21,12 +21,12 @@ const MasterLayout: React.FC = ({children}) => {
     <PageDataProvider>
       <div className='d-flex flex-column flex-root'>
         <div className='page d-flex flex-row flex-column-fluid'>
-          <AsideDefault />
+          {/*<AsideDefault />*/}
           <div className='wrapper d-flex flex-column flex-row-fluid' id='kt_wrapper'>
             <HeaderWrapper />
 
             <div id='kt_content' className='content d-flex flex-column flex-column-fluid'>
-              <Toolbar />
+              {/*<Toolbar />*/}
               <div className='post d-flex flex-column-fluid' id='kt_post'>
                 <Content>{children}</Content>
               </div>
@@ -37,9 +37,11 @@ const MasterLayout: React.FC = ({children}) => {
       </div>
 
       {/* begin:: Drawers */}
+      {/*
       <ActivityDrawer />
       <ExploreMain />
       <DrawerMessenger />
+      */}
       {/* end:: Drawers */}
 
       {/* begin:: Modals */}

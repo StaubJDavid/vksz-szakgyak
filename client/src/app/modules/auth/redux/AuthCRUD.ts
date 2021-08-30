@@ -27,7 +27,10 @@ export const USER_BLOCK_UNBLOCK = `${API_URL}/api/admin/block-user`
 export const ADMIN_CHANGE_PASSWORD = `${API_URL}/api/admin/change/password`
 export const ADMIN_CHANGE_EMAIL = `${API_URL}/api/admin/change/email`
 export const GET_NEWS_NOTIFS = `${API_URL}/api/admin/get-news-notifs`
+export const SEND_USERS_NOTIF = `${API_URL}/api/admin/send/users/notification`
+export const SEND_USER_NOTIF = `${API_URL}/api/admin/send/user/notification`
 
+/*Auth request start*/
 // Server should return AuthModel
 export function login(email: string, password: string) {
   return axios.post(LOGIN_URL, {email, password})
@@ -58,41 +61,62 @@ export function register(
   })
 }
 
-export function sendConfirmEmail(email: string) {
-  return axios.post<{result:boolean}>(SEND_CONFIRM_EMAIL, {email})
+/*Auth request end*/
+
+
+/*User request start*/
+export function uploadAvatar(avatar:string, user_id:number) {
+  return axios.post<{result: boolean}>(CHANGE_AVATAR, {avatar, user_id})
 }
 
-// Server should return object => { result: boolean } (Is Email in DB)
-export function requestPassword(email: string) {
-  return axios.post<{result: boolean}>(REQUEST_PASSWORD_URL, {email})
+export function changePassword(current_pass:string,new_pass:string, new_pass2:string, user_id:number) {
+  return axios.post<{result: boolean}>(CHANGE_PASSWORD, {current_pass, new_pass, new_pass2, user_id})
 }
 
-export function changeDetails(
-    user_id:number,
-    email: string, 
-    firstname: string, 
-    lastname: string, 
-    zip: string | undefined,
-    city: string | undefined,
-    street: string | undefined,
-    house_number: string | undefined,
-    phone: string | undefined,
-  ) {
-  return axios.post<{result: boolean}>(CHANGE_USER_DETAILS, {
-    user_id,
-    email,
-    firstname,
-    lastname,
-    zip,
-    city,
-    street,
-    house_number,
-    phone
-  })
+export function changeEmail(email:string, current_pass:string, user_id:number) {
+  return axios.post<{result: boolean}>(CHANGE_EMAIL, {email, current_pass, user_id})
 }
 
 export function updateNotifications(notifications: UserCommunicationModel[], user_id:number) {
   return axios.put<{result: boolean}>(CHANGE_NOTIFICATIONS_URL, {notifications, user_id})
+}
+
+export function changeDetails(
+  user_id:number,
+  email: string, 
+  firstname: string, 
+  lastname: string, 
+  zip: string | undefined,
+  city: string | undefined,
+  street: string | undefined,
+  house_number: string | undefined,
+  phone: string | undefined,
+) {
+return axios.post<{result: boolean}>(CHANGE_USER_DETAILS, {
+  user_id,
+  email,
+  firstname,
+  lastname,
+  zip,
+  city,
+  street,
+  house_number,
+  phone
+})
+}
+
+export function sendConfirmEmail(email: string) {
+  return axios.post<{result:boolean}>(SEND_CONFIRM_EMAIL, {email})
+}
+/*User request end*/
+
+/*Admin request start*/
+export function adminChangeEmail(email:string, user_id:number) {
+  return axios.post<{result: boolean}>(ADMIN_CHANGE_EMAIL, {email, user_id})
+}
+
+export function adminChangePassword(new_pass:string, new_pass2:string, user_id:number) {
+  return axios.post<{result: boolean}>(ADMIN_CHANGE_PASSWORD, {new_pass, new_pass2, user_id})
 }
 
 export function getUsers() {
@@ -111,28 +135,25 @@ export function getNewsNotifs() {
   return axios.get<{news_notifs: NewsNotifsModel}>(GET_NEWS_NOTIFS)
 }
 
-export function uploadAvatar(avatar:string, user_id:number) {
-  return axios.post<{result: boolean}>(CHANGE_AVATAR, {avatar, user_id})
+export function sendUsersNotif(service_id:number, notif_id:number, title:string, message:string) {
+  return axios.post<{result: Boolean}>(SEND_USERS_NOTIF, {service_id, notif_id, title, message})
 }
 
-export function changePassword(current_pass:string,new_pass:string, new_pass2:string, user_id:number) {
-  return axios.post<{result: boolean}>(CHANGE_PASSWORD, {current_pass, new_pass, new_pass2, user_id})
+export function sendUserNotif(notif_id:number, title:string, message:string, user_id:number) {
+  return axios.post<{result: Boolean}>(SEND_USER_NOTIF, {notif_id, title, message, user_id})
 }
 
-export function changeEmail(email:string, current_pass:string, user_id:number) {
-  return axios.post<{result: boolean}>(CHANGE_EMAIL, {email, current_pass, user_id})
-}
+/*Admin request end*/
 
-export function adminChangeEmail(email:string, user_id:number) {
-  return axios.post<{result: boolean}>(ADMIN_CHANGE_EMAIL, {email, user_id})
-}
-
-export function adminChangePassword(new_pass:string, new_pass2:string, user_id:number) {
-  return axios.post<{result: boolean}>(ADMIN_CHANGE_PASSWORD, {new_pass, new_pass2, user_id})
-}
-
+//GetUserByToken
 export function getUserByToken() {
   // Authorization head should be fulfilled in interceptor.
   // Check common redux folder => setupAxios
   return axios.get<UserModel>(GET_USER_BY_ACCESSTOKEN_URL)
+}
+
+//Request new password
+// Server should return object => { result: boolean } (Is Email in DB)
+export function requestPassword(email: string) {
+  return axios.post<{result: boolean}>(REQUEST_PASSWORD_URL, {email})
 }

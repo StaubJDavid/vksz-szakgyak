@@ -6,7 +6,7 @@ import {GetRole} from '../../_metronic/helpers/components/UserRole'
 const AdminBoard: FC = () => {
     
     return (
-        <Switch>
+      <Switch>
         {GetRole() === 'user' ? (
           /*Redirect to / if user.*/
           <Redirect from='/admin-board' to='/' />
