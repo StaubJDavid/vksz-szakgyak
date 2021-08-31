@@ -18,13 +18,15 @@ const emailFormValidationSchema = Yup.object().shape({
 
 const passwordFormValidationSchema = Yup.object().shape({
   newPassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Password is required'),
-  passwordConfirmation: Yup.string()
-    .min(3, 'Minimum 3 symbols')
+    .min(8, 'Minimum 8 symbols')
     .max(50, 'Maximum 50 symbols')
     .required('Password is required')
+    .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"'[\]*+,-./{}~])(?=.{8,})/, 'Should be atleas 8 long, contains 1 lowercase,uppercase,number,special character'),
+  passwordConfirmation: Yup.string()
+    .min(8, 'Minimum 8 symbols')
+    .max(50, 'Maximum 50 symbols')
+    .required('Password is required')
+    .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"'[\]*+,-./{}~])(?=.{8,})/, 'Should be atleas 8 long, contains 1 lowercase,uppercase,number,special character')
     .oneOf([Yup.ref('newPassword'), null], 'Passwords must match'),
 })
 

@@ -11,19 +11,25 @@ const Joi = require('joi');
 //     console.log(error);
 //     res.status(400).json(error.message);
 // }
+// const password_regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!"#$%&'()*+,-.\/:;<=>?@\[\]\\^_`{}~])(?=.{8,})/gm;
 
 const joi_email = Joi.string().email().required();
-const joi_lastname = Joi.string().alphanum().min(2).max(15).required(); 
-const joi_firstname = Joi.string().min(2).max(15).required(); 
-const joi_password = Joi.string().min(6).max(15).required();
+const joi_email_regex = Joi.string().pattern(new RegExp('^\\w+([\\.-]?\\w+)*@\\w+([\\.-]?\\w+)*(\\.\\w{2,})')).required().messages({'string.pattern.base': `Something wrong`});
+const joi_lastname = Joi.string().min(2).max(20).required(); 
+const joi_firstname = Joi.string().min(2).max(20).required(); 
+const joi_password = Joi.string().pattern(new RegExp('(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"\'\[\\\]*+,-./{}~])(?=.{8,})')).required().messages({'string.pattern.base': `Password is bad`});;
 const joi_zip = Joi.string().pattern(new RegExp('[0-9][0-9][0-9][0-9]')).min(4).max(4).required().messages({'string.pattern.base': `Zip contains non numerical value`});
 const joi_city = Joi.string().min(2).max(35).required();
 const joi_street = Joi.string().min(1).max(35).required();
 const joi_house_number = Joi.string().min(1).max(10).required();
-const joi_phone = Joi.string().min(10).max(11).regex(/^\d+$/).required().messages({'string.pattern.base': `phone contains non numerical value`});
+const joi_phone = Joi.string().regex(/^^((?:\+?3|0)6)(?:\s|-|\()?(\d{1,2})(?:\s|-|\))?(\d{3})-?\s?(\d{3,4})$/).required().messages({'string.pattern.base': `06/+36 xx xxx xxxx`});
 const joi_avatar = Joi.string().base64();
 const joi_id = Joi.number().required();
 const joi_device_token = Joi.string().required(); 
+
+const emailTestValidate = Joi.object({
+    password: joi_password
+});
 
 const registerValidate = Joi.object({
     email: joi_email,
@@ -106,3 +112,4 @@ module.exports.changeEmailValidate = changeEmailValidate
 module.exports.changePasswordValidate = changePasswordValidate
 module.exports.sendUsersNotifValidate = sendUsersNotifValidate
 module.exports.sendUserNotifValidate = sendUserNotifValidate
+module.exports.emailTestValidate = emailTestValidate

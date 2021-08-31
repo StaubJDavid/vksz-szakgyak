@@ -16,24 +16,26 @@ const emailFormValidationSchema = Yup.object().shape({
     .max(50, 'Maximum 50 symbols')
     .required('Email is required'),
   confirmPassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
+    .min(8, 'Minimum 8 symbols')
     .max(50, 'Maximum 50 symbols')
     .required('Password is required'),
 })
 
 const passwordFormValidationSchema = Yup.object().shape({
   currentPassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
+    .min(8, 'Minimum 8 symbols')
     .max(50, 'Maximum 50 symbols')
     .required('Password is required'),
   newPassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
+    .min(8, 'Minimum 8 symbols')
     .max(50, 'Maximum 50 symbols')
+    .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"'[\]*+,-./{}~])(?=.{8,})/, 'Should be atleas 8 long, contains 1 lowercase,uppercase,number,special character')
     .required('Password is required'),
   passwordConfirmation: Yup.string()
-    .min(3, 'Minimum 3 symbols')
+    .min(8, 'Minimum 8 symbols')
     .max(50, 'Maximum 50 symbols')
     .required('Password is required')
+    .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"'[\]*+,-./{}~])(?=.{8,})/, 'Should be atleas 8 long, contains 1 lowercase,uppercase,number,special character')
     .oneOf([Yup.ref('newPassword'), null], 'Passwords must match'),
 })
 

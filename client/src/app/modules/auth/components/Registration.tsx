@@ -25,8 +25,8 @@ const initialValues = {
 
 const registrationSchema = Yup.object().shape({
   firstname: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
+    .min(2, 'Minimum 2 symbols')
+    .max(20, 'Maximum 20 symbols')
     .required('First name is required'),
   email: Yup.string()
     .email('Wrong email format')
@@ -34,32 +34,34 @@ const registrationSchema = Yup.object().shape({
     .max(50, 'Maximum 50 symbols')
     .required('Email is required'),
   lastname: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
+    .min(2, 'Minimum 2 symbols')
+    .max(20, 'Maximum 20 symbols')
     .required('Last name is required'),
   zip: Yup.string()//
-    .min(3,'Min is 3')
-    .max(50, 'max is 50')
+    .min(4,'Min is 4')
+    .max(4, 'max is 4')
     .required('Required'),
   city: Yup.string()//
     .min(2,'Min is 2')
-    .max(50, 'max is 50')
+    .max(35, 'max is 35')
     .required('City is required'),
   street: Yup.string()//
-    .min(2,'Min is 2')
-    .max(50, 'max is 50')
+    .min(1,'Min is 1')
+    .max(35, 'max is 35')
     .required('Street is required'),
   house_number: Yup.string()//
-    .min(0,'Min is 0')
-    .max(50, 'max is 50')
+    .min(1,'Min is 1')
+    .max(10, 'max is 10')
     .required('House number is required'),
   phone: Yup.string()//
     .min(3,'Min is 3')
     .max(50, 'max is 50')
+    .matches(/^((?:\+?3|0)6)(?:\s|-|\()?(\d{1,2})(?:\s|-|\))?(\d{3})-?\s?(\d{3,4})/ , 'Phone is not in correct format')
     .required('Phone is required'),
   password: Yup.string()
-    .min(3, 'Minimum 3 symbols')
+    .min(8, 'Minimum 8 symbols')
     .max(50, 'Maximum 50 symbols')
+    .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"'[\]*+,-./{}~])(?=.{8,})/, 'Should be atleas 8 long, contains 1 lowercase,uppercase,number,special character')
     .required('Password is required'),
   changepassword: Yup.string()
     .required('Password confirmation is required')

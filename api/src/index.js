@@ -6,7 +6,7 @@ const fs = require('fs');
 var nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
-const { registerValidate } = require('./helpers/validations');
+const { registerValidate, emailTestValidate } = require('./helpers/validations');
 
 /*Firebase Stuff */
 // var admin = require('firebase-admin');
@@ -122,36 +122,11 @@ app.get('/test', (req, res) => {
 });
 
 app.post('/validate', (req, res) => {
-    // db.query("SELECT zip FROM users WHERE user_id = ?", [8], (err, result) => {
-    //         if(err){
-    //             console.log(err);
-    //             res.send(err);
-    //         }else{
-    //             console.log(result[0].zip);
-    //             try {
-    //                 Joi.assert(result[0].zip, Joi.string())
-    //             } catch (error) {
-    //                 console.log(error);
-    //                 console.log('Hehe error');
-    //             }
-
-    //             console.log('Hehe error outside');
-    //             res.send(result[0].zip);
-    //         }
-    //     })
-    // console.log(`Number: ${number}`);
-    // console.log(`registerValidate: ${JSON.stringify(registerValidate)}`);
-    const { error, value } = registerValidate.validate({
-        email: req.body.email,
-        lastname: req.body.lastname,
-        firstname: req.body.firstname,
-        password: req.body.password,
-        zip: req.body.zip,
-        city: req.body.city,
-        street: req.body.street,
-        house_number: req.body.house_number,
-        phone: req.body.phone
+    // console.log('!"#$%&\'()*+,-./:;<=>?@[]\\^_`{}~aD1');
+    const { error, value } = emailTestValidate.validate({
+        password: '!"#$%&\'()*+,-./:;<=>?@[]\\^_`{}~aD1'
     });
+    // console.log(req.body.password);
 
     if (error === undefined) {
         console.log(value);
@@ -199,13 +174,13 @@ app.get('/createdb', (req, res) => {
     let sql = 'CREATE TABLE IF NOT EXISTS `users` (' +
         '`user_id` INT NOT NULL AUTO_INCREMENT,' +
         '`email` VARCHAR(255),' +
-        '`last_name` VARCHAR(255),' +
+        '`last_name` VARCHAR(20),' +
         '`first_name` VARCHAR(20),' +
         '`pw_hash` VARCHAR(255),' +
         '`zip` VARCHAR(4),' +
-        '`city` VARCHAR(20),' +
-        '`street` VARCHAR(20),' +
-        '`house_number` VARCHAR(20),' +
+        '`city` VARCHAR(35),' +
+        '`street` VARCHAR(35),' +
+        '`house_number` VARCHAR(10),' +
         '`phone` VARCHAR(20),' +
         '`role` ENUM(\'user\', \'admin\'),' +
         '`confirmed` BOOLEAN DEFAULT 0,' +

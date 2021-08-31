@@ -22,13 +22,13 @@ import * as auth from '../../../../auth/redux/AuthRedux'
 
 const profileDetailsSchema = Yup.object().shape({
   email:Yup.string(),
-  firstname: Yup.string(),
-  lastname: Yup.string(),
-  zip: Yup.string(),
-  city: Yup.string(),
-  street: Yup.string(),
-  house_number: Yup.string(),
-  phone: Yup.string(),
+  firstname: Yup.string().max(20).min(2),
+  lastname: Yup.string().max(20).min(2),
+  zip: Yup.string().max(4).min(4).matches(/[0-9][0-9][0-9][0-9]/, 'Zip code contains non numerical value'),
+  city: Yup.string().max(35),
+  street: Yup.string().max(35),
+  house_number: Yup.string().max(10),
+  phone: Yup.string().matches(/^((?:\+?3|0)6)(?:\s|-|\()?(\d{1,2})(?:\s|-|\))?(\d{3})-?\s?(\d{3,4})/ , 'Phone is not in correct format')
 })
 
 const ProfileDetails: React.FC = () => {
@@ -134,6 +134,16 @@ const ProfileDetails: React.FC = () => {
         <form onSubmit={formik.handleSubmit} noValidate className='form'>
           <div className='card-body border-top p-9'>
             
+          <div className='row mb-6'>
+            <label className='col-sm-2 col-form-label fw-bold fs-6'>
+              <span className=''>Email:</span>
+            </label>
+
+            <div className='col-lg-8 col-form-label fw-bold fs-6'>
+                <span className='fw-bolder fs-6 text-dark'>{user.email}</span>
+            </div>
+          </div>
+
           <div className='row mb-6'>
               <label className='col-sm-2 col-form-label fw-bold fs-6'>Avatar</label>
               <div className='col-lg-8'>
