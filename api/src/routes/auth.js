@@ -284,7 +284,8 @@ router.get('/get-user', verify, (req, res) => {
                 console.log(err);
                 res.status(400).json('Query error');
             }else{
-                const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
+                try {
+                    const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
     
                 db.query('SELECT * FROM `user_notifs` un LEFT JOIN `news_services` ns ON un.service_id = ns.service_id  WHERE un.user_id = ?', [req.user.id], (err1, results1) => {
                     if(err1){
@@ -321,7 +322,11 @@ router.get('/get-user', verify, (req, res) => {
                             res.status(400).json('No notifications available for this user: ' + email);
                         }           
                     }
-                });  
+                }); 
+                } catch (error) {
+                    console.log('Trycatch error');
+                    res.status(400).json(error);
+                }    
             }        
         });
     }else{

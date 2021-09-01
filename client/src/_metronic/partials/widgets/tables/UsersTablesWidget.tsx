@@ -122,13 +122,13 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                 </td>
                 <td>
                   <div className='d-flex justify-content-center flex-shrink-0'>
-                    <a                   
+                    {/*<a                   
                       //href=''
                       onClick={() => {onSendMessageClick(u.id);}}
                       className='btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2'
                     >
                       <KTSVG path='/media/icons/duotone/Communication/Outgoing-mail.svg' className='svg-icon-3' />
-                    </a>                   
+                    </a>*/}                   
                     <a                   
                       //href=''
                       onClick={() => {onBlockClick(u.id, u.email); updateData({

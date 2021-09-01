@@ -4,7 +4,7 @@ const db = require('../database/db');
 const verify = require('../helpers/authVerify');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const {changeDetailsValidate, changeEmailValidate, changePasswordValidate, avatarValidate, idValidate} = require('../helpers/validations');
+const {changeDetailsValidate, changeEmailValidate, changePasswordValidate, avatarValidate, idValidate, updateDeviceToken} = require('../helpers/validations');
 
 
 router.post('/change/details', verify, (req, res) => {
@@ -44,8 +44,13 @@ router.post('/change/details', verify, (req, res) => {
                             console.log(err1);
                             res.status(400).json('Wrong ProfileDetails change');
                         }else{
-                            //console.log(results1);
-                            res.json({result: true})
+                            if(JSON.parse(JSON.stringify(results1)).changedRows === 0) {
+                                console.log('Didnt change anything');
+                                res.status(400).json('Didn\'t change anything');
+                            }else{
+                                // console.log('changed');
+                                res.json({result: true});
+                            }
                         }
                     })
                 }
@@ -88,8 +93,13 @@ router.post('/change/avatar', verify, (req, res) => {
                         // console.log(err);
                         res.status(400).json('There is a problem with updating the avatar');
                     }else{
-                        // console.log(results);
-                        res.json({result: true});
+                        if(JSON.parse(JSON.stringify(results)).changedRows === 0) {
+                            console.log('Didnt change anything');
+                            res.status(400).json('Didn\'t change anything');
+                        }else{
+                            console.log('changed');
+                            res.json({result: true});
+                        }
                     }
                 })  
             }
@@ -249,6 +259,41 @@ router.post('/change/email', verify, (req, res) => {
         }else{
             console.log('Same email');
             res.status(400).json('Same email');
+        }
+    }else{
+        console.log('Error:')
+        console.log(error);
+        res.status(400).json(error.message);
+    }
+});
+
+router.post('/update/device-token', verify, (req, res) => {
+    const { error, value } = updateDeviceToken.validate({ 
+        email: req.body.email,
+        req_user_id: req.user.id,
+        req_body_user_id: req.body.user_id,
+        device_token: req.body.device_token
+    });
+
+    if(!error){
+        if(req.user.id === req.body.user_id){
+            db.query('UPDATE users SET device_token = ? WHERE user_id = ? ', [req.body.device_token, req.body.user_id], (err, result) => {
+                if(err){
+                    console.log(err);
+                    res.status(400).json(err);
+                }else{
+                    if(JSON.parse(JSON.stringify(result)).changedRows === 0) {
+                        console.log('Didnt change anything');
+                        res.status(400).json('Didn\'t change anything');
+                    }else{
+                        console.log('changed');
+                        res.json({result: true});
+                    }
+                }
+            });
+        }else{
+            console.log(error);
+            res.status(400).json('req body user id !== req user id');
         }
     }else{
         console.log('Error:')

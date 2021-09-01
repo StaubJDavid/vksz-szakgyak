@@ -8,33 +8,6 @@ const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const { registerValidate, emailTestValidate } = require('./helpers/validations');
 
-/*Firebase Stuff */
-// var admin = require('firebase-admin');
-
-// var serviceAccount = require('./../src/pushup-test-vksz-firebase-adminsdk-hy1hr-b70f68fdc3.json');
-
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount)
-// });
-
-//var registrationToken1 = 'ft904rBfRqSVx6LbdAVQ1q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl';
-                                                                        //      -
-//var registrationToken2 = 'dskaoMgBRtSRVew4atbs-k:APA91bEAqsNEYoZ8hawlWpSyxFJI8A7eCShCep5d3bpSTDXwn9gALuewusgd-BFD7Lf0cfYw9V_flrIFKV1so3xdy5CLcipEKnJ4EWFadVAto-GGwohSGJrrhoZEg8Xrm-UDPqqXal8T';
-//                                                                 -       -                                                - -                                                          -        
-// const payload = {
-//     notification: {
-//         title: "Your Title",
-//         body: "Your Message!"
-//     }
-// };
-
-// var options = {
-//     priority: "high",
-//     timeToLive: 60 * 60 * 24
-// };
-
-/*Firebase Stuff */
-
 require('dotenv').config();
 
 const app = express();
@@ -55,120 +28,9 @@ app.get('/', (req, res) => {
 
 //Helpers/Tests
 
-app.get('/insert', (req, res) => {
-    db.query("INSERT INTO `users`(`email`, `last_name`, `first_name`, `pw_hash`, `zip`, `city`, `street`, `house_number`, `phone`, `role`) " +
-        "VALUES ('email','last_name','first_name','pw_hash','zip','city','street','house_number','phone','admin')", (err, result) => {
-            if (err) {
-                console.log(err);
-                res.send(err);
-            } else {
-                console.log(result.insertId);
-                res.send({ id: result.insertId });
-            }
-        })
-
-});
-
 app.get('/test', (req, res) => {
-    // console.log('Heeeeee?');
 
-    // const message = {
-    //     data: {
-    //       score: '850',
-    //       time: '2:45'
-    //     },
-    //     notification: {
-    //         title: "Haha teszt notification message",
-    //         body: "This is me message bye!"
-    //     },
-    //     token: registrationToken
-    //   };
-      
-    //   // Send a message to the device corresponding to the provided
-    //   // registration token.
-    //   admin.messaging().send(message)
-    //     .then((response) => {
-    //       // Response is a message ID string.
-    //       console.log('Successfully sent message:', response);
-    //     })
-    //     .catch((error) => {
-    //       console.log('Error sending message:', error);
-    //     });
-
-    //SendToMultipleDevices
-    // const registrationTokens = [
-    //     'ft904rBfRqSVx6LbdAVQ1q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl',
-    //     'dskaoMgBRtSRVew4atbs-k:APA91bEAqsNEYoZ8hawlWpSyxFJI8A7eCShCep5d3bpSTDXwn9gALuewusgd-BFD7Lf0cfYw9V_flrIFKV1so3xdy5CLcipEKnJ4EWFadVAto-GGwohSGJrrhoZEg8Xrm-UDPqqXal8T'
-    // ];
-      
-    // const message = {
-    //     data: {score: '850', time: '2:45'},
-    //     notification: {
-    //         title: "Haha teszt notification message",
-    //         body: "This is me message bye!"
-    //     },
-    //     tokens: registrationTokens,
-    //   };
-      
-    //   admin.messaging().sendMulticast(message)
-    //     .then((response) => {
-    //       console.log(response.successCount + ' messages were sent successfully');
-    //       res.json(response);
-    //     }).catch((error) => {
-    //         console.log(error);
-    //         res.json(error);
-    //     });
-      
 });
-
-app.post('/validate', (req, res) => {
-    // console.log('!"#$%&\'()*+,-./:;<=>?@[]\\^_`{}~aD1');
-    const { error, value } = emailTestValidate.validate({
-        password: '!"#$%&\'()*+,-./:;<=>?@[]\\^_`{}~aD1'
-    });
-    // console.log(req.body.password);
-
-    if (error === undefined) {
-        console.log(value);
-        res.json(value);
-    } else {
-        console.log('Error:')
-        console.log(error);
-        res.json(error);
-    }
-});
-
-app.get('/email', (req, res) => {
-
-    // https://ethereal.email/create
-    // create reusable transporter object using the default SMTP transport
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        auth: {
-            user: process.env.EMAIL_USERNAME,
-            pass: process.env.EMAIL_PASSWORD
-        }
-    });
-
-    var mailOptions = {
-        from: process.env.EMAIL_USERNAME,
-        to: 'davidkah20@gmail.com',
-        subject: 'Hello ✔',
-        text: 'Hello world?',
-        html: "<b>Hello world?</b>"
-    };
-
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log('Email sent: ' + info.response);
-            res.send(mailOptions);
-        }
-    });
-});
-
 
 app.get('/createdb', (req, res) => {
     let sql = 'CREATE TABLE IF NOT EXISTS `users` (' +

@@ -102,6 +102,13 @@ const sendUserNotifValidate = Joi.object({
     user_id: joi_id
 });
 
+const updateDeviceToken = Joi.object({
+    email: joi_email,
+    req_body_user_id: joi_id,
+    req_user_id: joi_id,
+    device_token: joi_device_token
+});
+
 module.exports.registerValidate = registerValidate
 module.exports.loginValidate = loginValidate
 module.exports.emailValidate = emailValidate
@@ -113,3 +120,4 @@ module.exports.changePasswordValidate = changePasswordValidate
 module.exports.sendUsersNotifValidate = sendUsersNotifValidate
 module.exports.sendUserNotifValidate = sendUserNotifValidate
 module.exports.emailTestValidate = emailTestValidate
+module.exports.updateDeviceToken = updateDeviceToken

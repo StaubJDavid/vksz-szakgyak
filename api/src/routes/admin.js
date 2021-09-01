@@ -35,60 +35,65 @@ router.post('/get-user-by-id', verify, (req,res) => {
                     console.log(err);
                     res.status(400).json('Query error');
                 }else{
-                    const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
-                    console.log(results);
-                    db.query('SELECT * FROM `user_notifs` un LEFT JOIN `news_services` ns ON un.service_id = ns.service_id  WHERE un.user_id = ?', [req.body.user_id], (err1, results1) => {
-                        if(err1){
-                            console.log('Query2');
-                            console.log(err1);
-                            res.status(400).json('Query error1');
-                        }else{
-                            if(results1.length !== 0){
-                                let communications = [];
-                                results1.map(r => {
-                                    communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up, service_id: r.service_id});
-                                });
-
-                                console.log({
-                                    id: req.body.user_id,
-                                    username: last_name + " " + first_name,
-                                    //password: "no password for u",
-                                    email: email,
-                                    firstname: first_name,
-                                    lastname: last_name,
-                                    phone: phone,
-                                    roles: [role],
-                                    pic: avatar,
-                                    zip: zip,
-                                    city: city,
-                                    house_number: house_number,
-                                    street: street,
-                                    communication: communications
-                                });
-
-                                res.json({user:{
-                                    id: user_id,
-                                    username: last_name + " " + first_name,
-                                    //password: "no password for u",
-                                    email: email,
-                                    firstname: first_name,
-                                    lastname: last_name,
-                                    phone: phone,
-                                    roles: [role],
-                                    pic: avatar,
-                                    zip: zip,
-                                    city: city,
-                                    house_number: house_number,
-                                    street: street,
-                                    communication: communications
-                                }});
-                                console.log('Sent json');
+                    try {
+                        const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
+                        console.log(results);
+                        db.query('SELECT * FROM `user_notifs` un LEFT JOIN `news_services` ns ON un.service_id = ns.service_id  WHERE un.user_id = ?', [req.body.user_id], (err1, results1) => {
+                            if(err1){
+                                console.log('Query2');
+                                console.log(err1);
+                                res.status(400).json('Query error1');
                             }else{
-                                console.log('There\'s no such user');
-                                res.status(400).json('There\'s no such user');
+                                if(results1.length !== 0){
+                                    let communications = [];
+                                    results1.map(r => {
+                                        communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up, service_id: r.service_id});
+                                    });
+    
+                                    console.log({
+                                        id: req.body.user_id,
+                                        username: last_name + " " + first_name,
+                                        //password: "no password for u",
+                                        email: email,
+                                        firstname: first_name,
+                                        lastname: last_name,
+                                        phone: phone,
+                                        roles: [role],
+                                        pic: avatar,
+                                        zip: zip,
+                                        city: city,
+                                        house_number: house_number,
+                                        street: street,
+                                        communication: communications
+                                    });
+    
+                                    res.json({user:{
+                                        id: user_id,
+                                        username: last_name + " " + first_name,
+                                        //password: "no password for u",
+                                        email: email,
+                                        firstname: first_name,
+                                        lastname: last_name,
+                                        phone: phone,
+                                        roles: [role],
+                                        pic: avatar,
+                                        zip: zip,
+                                        city: city,
+                                        house_number: house_number,
+                                        street: street,
+                                        communication: communications
+                                    }});
+                                    console.log('Sent json');
+                                }else{
+                                    console.log('There\'s no such user');
+                                    res.status(400).json('There\'s no such user');
+                                }
                             }
-                        }
-                    });
+                        });
+                    } catch (error) {
+                        console.log('Trycatch error');
+                        res.status(400).json(error);
+                    }
                  }
             });
         }else{
@@ -220,8 +225,14 @@ router.post('/change/password', verify, (req, res) => {
                     console.log(err);
                     res.status(400).json('Password update query fail');
                 }else{
-                    console.log(result);
-                    res.json({result: true});
+                    // console.log(result);
+                    if(JSON.parse(JSON.stringify(result)).changedRows === 0) {
+                        console.log('Didnt change anything');
+                        res.status(400).json('Didn\'t change anything');
+                    }else{
+                        console.log('changed');
+                        res.json({result: true});
+                    }
                 }
             });
         }else{
@@ -253,8 +264,13 @@ router.post('/change/email', verify, (req, res) => {
                     console.log(err);
                     res.status(400).json('Email update query fail');
                 }else{
-                    console.log(result);
-                    res.json({result: true});
+                    if(JSON.parse(JSON.stringify(result)).changedRows === 0) {
+                        console.log('Didnt change anything');
+                        res.status(400).json('Didn\'t change anything');
+                    }else{
+                        console.log('changed');
+                        res.json({result: true});
+                    }
                 }
             });
         }else{
@@ -528,5 +544,22 @@ router.get('/get-news-notifs', verify, (req, res) => {
     }
 });
 
+function verifyFCMToken (fcmToken){
+    return admin.messaging().send({
+        token: fcmToken
+    }, true)
+}
+
+router.get('/test', (req, res) => {
+    verifyFCMToken("ft904rBfRqSVx6LbdAVQ2q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl")
+    .then(result => {
+        console.log('Valid token');
+        res.json('Valid token');
+    })
+    .catch(err => {
+        console.log('Invalid token');
+        res.json('Invalid token');
+    })
+});
 
 module.exports = router;
