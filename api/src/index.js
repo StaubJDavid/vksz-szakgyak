@@ -142,7 +142,7 @@ app.get('/createdb', (req, res) => {
         }
     });
 
-    res.send('DB Check log');
+    res.json('DB Check log');
 });
 
 app.listen(process.env.PORT, () => {
