@@ -42,7 +42,7 @@ app.get('/createdb', (req, res) => {
         '`zip` VARCHAR(4),' +
         '`city` VARCHAR(35),' +
         '`street` VARCHAR(35),' +
-        '`house_number` VARCHAR(10),' +
+        '`house_number` VARCHAR(100),' +
         '`phone` VARCHAR(20),' +
         '`role` ENUM(\'user\', \'admin\'),' +
         '`confirmed` BOOLEAN DEFAULT 0,' +
