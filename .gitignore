@@ -4,6 +4,7 @@
 api/src/pushup-test-vksz-firebase-adminsdk-hy1hr-b70f68fdc3.json
 api/src/pushup-test-vksz-firebase-adminsdk-private-key.json
 api/node_modules
+api/ssl
 client/node_modules
 client/.pnp
 client/.pnp.js

@@ -20,6 +20,9 @@
     "mysql": "^2.18.1",
     "nodemailer": "^6.6.3",
     "nodemon": "^2.0.12",
+    "passport": "^0.4.1",
+    "passport-facebook": "^3.0.0",
+    "passport-facebook-token": "^4.0.0",
     "uuid": "^8.3.2"
   }
 }

@@ -4,15 +4,26 @@ const cors = require('cors');
 const db = require('./database/db');
 const fs = require('fs');
 var nodemailer = require('nodemailer');
+const passport = require('passport');
+const FacebookStrategy = require('passport-facebook').Strategy;
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const { registerValidate, emailTestValidate } = require('./helpers/validations');
+var https = require('https');
+var http = require('http');
+var privateKey  = fs.readFileSync('ssl/selfsigned.key', 'utf8');
+var certificate = fs.readFileSync('ssl/selfsigned.crt', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
+const FacebookTokenStrategy = require('passport-facebook-token');
 
 require('dotenv').config();
 
 const app = express();
 app.use('*', cors());
 app.use(express.json({ limit: '12MB' }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 var authRouter = require('./routes/auth');
 var userRouter = require('./routes/user');
@@ -28,8 +39,96 @@ app.get('/', (req, res) => {
 
 //Helpers/Tests
 
-app.get('/test', (req, res) => {
+//Social Login Begin
 
+
+
+passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: "https://localhost:8443/auth/facebook/callback",
+    profileFields: ['id', 'displayName', 'name', 'email']
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    // console.log(profile);
+    // console.log(accessToken);
+    return cb(null, profile);
+  }
+));
+
+// passport.use('facebook-token', new FacebookTokenStrategy({
+//     clientID: process.env.FACEBOOK_APP_ID,
+//     clientSecret: process.env.FACEBOOK_APP_SECRET,
+//     fbGraphVersion: 'v11.0'
+//   },
+//   function(accessToken, refreshToken, profile, done) {
+//     // console.log(profile);
+
+//     console.log(accessToken);
+//     var user = {
+//         'email': profile.emails[0].value,
+//         'name' : profile.name.givenName + ' ' + profile.name.familyName,
+//         'id'   : profile.id,
+//         'token': accessToken
+//     }
+
+//     // You can perform any necessary actions with your user at this point,
+//     // e.g. internal verification against a users table,
+//     // creating new user entries, etc.
+
+//     return done(null, user); // the user object we just made gets passed to the route's controller as `req.user`
+//   }
+// ));
+
+// app.get('/my/api/:access_token/endpoint', passport.authenticate('facebook-token'), 
+//         function (req, res) {
+//             if (req.user){
+//                 //you're authenticated! return sensitive secret information here.
+//                 res.send(200, {'secrets':['array','of','top','secret','information']});
+//             } else {
+//                 // not authenticated. go away.
+//                 res.send(401)
+//             }
+
+// });
+
+passport.serializeUser(function(user, cb) {
+    cb(null, user);
+});
+
+// used to deserialize the user
+passport.deserializeUser(function(id, cb) {
+    return cb(null,user)
+});
+
+app.get('/auth/facebook', passport.authenticate('facebook' , {session: false, authType: 'reauthenticate', scope: 'email'}));
+
+app.get('/auth/facebook/callback',
+  passport.authenticate('facebook', { failureRedirect: '/test' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    console.log('callback req user')
+    console.log(`ID: ${req.user._json.id}`);
+    console.log(`Last Name: ${req.user._json.last_name}`);
+    console.log(`First Name: ${req.user._json.first_name}`);
+    console.log(`Email: ${req.user._json.email}`);
+    console.log(`Access token: ${req.user._json.access_token}`);
+    console.log(req.user);
+    res.redirect('/logsucc');
+  });
+
+app.get('/logout',function (req, res){
+    req.logout();
+    res.send('Logged out?');
+});
+
+//Social Login End
+app.get('/test', (req, res) => {
+    res.send('Oh noo');
+});
+
+app.get('/logsucc', (req, res) => {
+    res.send('Oh yes');
 });
 
 app.get('/createdb', (req, res) => {
@@ -145,6 +244,17 @@ app.get('/createdb', (req, res) => {
     res.json('DB Check log');
 });
 
-app.listen(process.env.PORT, () => {
-    console.log(`Listening to ${process.env.PORT}`);
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(credentials, app);
+
+// app.listen(process.env.PORT, () => {
+//     console.log(`Listening to ${process.env.PORT}`);
+// });
+
+httpServer.listen(3001, () => {
+    console.log('http 3001');
+});
+
+httpsServer.listen(8443, () => {
+    console.log('https 8443');
 });
