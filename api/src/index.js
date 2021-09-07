@@ -14,7 +14,7 @@ var http = require('http');
 var privateKey  = fs.readFileSync('ssl/selfsigned.key', 'utf8');
 var certificate = fs.readFileSync('ssl/selfsigned.crt', 'utf8');
 var credentials = {key: privateKey, cert: certificate};
-const FacebookTokenStrategy = require('passport-facebook-token');
+const axios = require('axios');
 
 require('dotenv').config();
 
@@ -42,7 +42,7 @@ app.get('/', (req, res) => {
 //Social Login Begin
 
 
-
+/* To emulate creating token on client */
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
@@ -50,47 +50,15 @@ passport.use(new FacebookStrategy({
     profileFields: ['id', 'displayName', 'name', 'email']
   },
   function(accessToken, refreshToken, profile, cb) {
-    // console.log(profile);
-    // console.log(accessToken);
-    return cb(null, profile);
+    var user = {
+        'email': profile.emails[0].value,
+        'name' : profile.name.givenName + ' ' + profile.name.familyName,
+        'id'   : profile.id,
+        'token': accessToken
+    }
+    return cb(null, user);
   }
 ));
-
-// passport.use('facebook-token', new FacebookTokenStrategy({
-//     clientID: process.env.FACEBOOK_APP_ID,
-//     clientSecret: process.env.FACEBOOK_APP_SECRET,
-//     fbGraphVersion: 'v11.0'
-//   },
-//   function(accessToken, refreshToken, profile, done) {
-//     // console.log(profile);
-
-//     console.log(accessToken);
-//     var user = {
-//         'email': profile.emails[0].value,
-//         'name' : profile.name.givenName + ' ' + profile.name.familyName,
-//         'id'   : profile.id,
-//         'token': accessToken
-//     }
-
-//     // You can perform any necessary actions with your user at this point,
-//     // e.g. internal verification against a users table,
-//     // creating new user entries, etc.
-
-//     return done(null, user); // the user object we just made gets passed to the route's controller as `req.user`
-//   }
-// ));
-
-// app.get('/my/api/:access_token/endpoint', passport.authenticate('facebook-token'), 
-//         function (req, res) {
-//             if (req.user){
-//                 //you're authenticated! return sensitive secret information here.
-//                 res.send(200, {'secrets':['array','of','top','secret','information']});
-//             } else {
-//                 // not authenticated. go away.
-//                 res.send(401)
-//             }
-
-// });
 
 passport.serializeUser(function(user, cb) {
     cb(null, user);
@@ -101,21 +69,17 @@ passport.deserializeUser(function(id, cb) {
     return cb(null,user)
 });
 
-app.get('/auth/facebook', passport.authenticate('facebook' , {session: false, authType: 'reauthenticate', scope: 'email'}));
+app.get('/auth/facebook', passport.authenticate('facebook' , {session: false, authType: 'reauthenticate', scope: ['email', 'public_profile']}));
 
 app.get('/auth/facebook/callback',
   passport.authenticate('facebook', { failureRedirect: '/test' }),
   function(req, res) {
     // Successful authentication, redirect home.
-    console.log('callback req user')
-    console.log(`ID: ${req.user._json.id}`);
-    console.log(`Last Name: ${req.user._json.last_name}`);
-    console.log(`First Name: ${req.user._json.first_name}`);
-    console.log(`Email: ${req.user._json.email}`);
-    console.log(`Access token: ${req.user._json.access_token}`);
     console.log(req.user);
-    res.redirect('/logsucc');
-  });
+    res.json(req.user.token);
+});
+
+/* To emulate creating token on client */
 
 app.get('/logout',function (req, res){
     req.logout();
@@ -124,7 +88,25 @@ app.get('/logout',function (req, res){
 
 //Social Login End
 app.get('/test', (req, res) => {
-    res.send('Oh noo');
+    axios.get('https://graph.facebook.com/v11.0/3198393003728480/picture?type=large')
+    .then(function (response){
+        console.log(response.request.res.responseUrl);
+        axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
+        .then( response => {
+            db.query('INSERT INTO facebook_photo (avatar) VALUES (?)',[Buffer.from(response.data, 'binary')], (err, result) => {
+                if(err){
+                    console.log(err);
+                    res.json(err);
+                }else{
+                    console.log('Inserted');
+                    res.json('Inserted');
+                }
+            });
+        })
+    })
+    .catch(function (error){
+        res.json(error);
+    })
 });
 
 app.get('/logsucc', (req, res) => {
@@ -144,6 +126,8 @@ app.get('/createdb', (req, res) => {
         '`house_number` VARCHAR(100),' +
         '`phone` VARCHAR(20),' +
         '`role` ENUM(\'user\', \'admin\'),' +
+        '`provider` ENUM(\'vksz\', \'facebook\', \'google\', \'twitter\'),' +
+        '`provider_id` INT NOT NULL ,' +
         '`confirmed` BOOLEAN DEFAULT 0,' +
         '`avatar` MEDIUMBLOB,' +
         '`device_token` VARCHAR(255),' +

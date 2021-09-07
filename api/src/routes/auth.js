@@ -12,6 +12,10 @@ const jwt_decode = require('jwt-decode');
 const sendEmailVerification = require('../helpers/emailVerification');
 const {registerValidate, loginValidate, emailValidate, idValidate} = require('../helpers/validations');
 const Joi = require('joi');
+const FacebookTokenStrategy = require('passport-facebook-token');
+const passport = require('passport');
+const axios = require('axios');
+
 require('dotenv').config();
 //LOGIN:
 router.post('/login', (req, res) => {
@@ -25,7 +29,7 @@ router.post('/login', (req, res) => {
     if(!error){
         let query = db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
                         'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-                        'WHERE u.email LIKE ?',[email], (err, results) => {
+                        'WHERE u.email LIKE ? && u.provider LIKE \'vksz\'',[email], (err, results) => {
             if(err){
                 console.log(err);
                 res.status(400).json(err);
@@ -38,7 +42,7 @@ router.post('/login', (req, res) => {
                     if(userEmail === email && bcrypt.compareSync(password, results[0].pw_hash)){
                         //Generate webtoken
                         // console.log('Generating webtoken with id: ' + results[0].user_id);
-                        const accessToken = jwt.sign({ email: userEmail, role: results[0].role, id: results[0].user_id},
+                        const accessToken = jwt.sign({ email: userEmail, role: results[0].role, id: results[0].user_id, provider: results[0].provider},
                                 process.env.SECRET_KEY,
                                 {expiresIn: "30m"}
                             );
@@ -112,6 +116,8 @@ router.post('/register', (req, res) => {
                     house_number: house_number,
                     phone: phone,
                     role: 'user',
+                    provider: 'vksz',
+                    provider_id: 0,
                     avatar: avatarData,
                     device_token: device_token
                 };
@@ -335,5 +341,123 @@ router.get('/get-user', verify, (req, res) => {
         res.status(400).json(error.message);
     }    
 });
+
+/* Facebook login VALIDATION/CHECKING ON SERVER */
+passport.use('facebook-token', new FacebookTokenStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    fbGraphVersion: 'v11.0'
+  },
+  function(accessToken, refreshToken, profile, done) {
+    // console.log(profile);
+    db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+            'WHERE u.email LIKE ? && u.provider LIKE \'facebook\'', [profile.emails[0].value], (err, result) => {
+        if(err){
+            console.log('Facebook token login query error 1');
+            return done(err);
+        }else{
+            if(result.length === 1){
+                if(result[0].BlackListEmail === null && result[0].confirmed === 1){
+                    console.log('login');
+                    const accessToken = jwt.sign({ email: profile.emails[0].value, role: result[0].role, id: result[0].user_id, provider: result[0].provider},
+                        process.env.SECRET_KEY,
+                        {expiresIn: "30m"}
+                    );
+                    done(null,accessToken);
+                }else{
+                    console.log('Facebook token login user blacklisted or unconfirmed');
+                    return done('Facebook token login user blacklisted or unconfirmed');
+                }
+            }else{
+                console.log('registering');
+                axios.get(profile.photos[0].value)
+                .then(function (response){
+                    console.log(response.request.res.responseUrl);
+                    axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
+                    .then( response => {
+                        const user = {
+                            email: profile.emails[0].value,
+                            last_name: profile.name.familyName, 
+                            first_name: profile.name.middleName === ""? profile.name.givenName : (profile.name.givenName + " " + profile.name.middleName), 
+                            pw_hash: "",
+                            zip: 0000,
+                            city: "",
+                            street: "",
+                            house_number: "",
+                            phone: "",
+                            role: 'user',
+                            provider: 'facebook',
+                            provider_id: profile.id,
+                            confirmed: 1,
+                            avatar: Buffer.from(response.data, 'binary').toString('base64'),
+                            device_token: ""
+                        };
+
+                        db.query('INSERT INTO users SET ?', user, (err3, results3) => {
+                            if(err3){
+                                console.log(err3);
+                                done(err3);
+                            }else{
+                                console.log('InsertedID: ' + results3.insertId);
+                                //Get all of the news services 
+                                db.query('SELECT * FROM `news_services`', (err4, results4) => {
+                                    if(err4){
+                                        console.log(err4);
+                                        done(err4)
+                                    }else{
+                                        //Make the notifications populating query
+                                        let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
+                                        results4.map(r => {
+                                            sql += `(${results3.insertId}, ${r.service_id}),`;
+                                        });
+                                        // console.log(sql);
+                                        var str1 = sql.replace(/,$/,";");
+                                        // console.log(str1);
+
+                                        //Execute the notifications populating query
+                                        db.query(str1, (err5, results5) => {
+                                            if(err5){
+                                                console.log(err5);
+                                                done(err5);
+                                            }else{
+                                                console.log(results5);
+                                                const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'facebook'},
+                                                    process.env.SECRET_KEY,
+                                                    {expiresIn: "30m"}
+                                                );
+                                                done(null,accessToken);                                           
+                                            }
+                                        });                                       
+                                    }       
+                                });                               
+                            }
+                        });
+                    })
+                })
+                .catch(function (error){
+                    done(error);
+                })
+            }
+        }
+    })
+  }
+));
+
+router.get('/facebook/token', (req, res) => {
+    passport.authenticate('facebook-token', function (err, accessToken, info) {
+          if(err){
+              if(err.oauthError){
+                  var oauthError = JSON.parse(err.oauthError.data);
+                  res.status(400).json(oauthError.error.message);
+              } else {
+                  res.status(400).json(err);
+              }
+          } else {
+              res.json(accessToken);
+          }
+    })(req, res);
+});
+/* Facebook login VALIDATION/CHECKING ON SERVER */
 
 module.exports = router;
