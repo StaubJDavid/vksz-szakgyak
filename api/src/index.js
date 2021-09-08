@@ -1,4 +1,5 @@
 const express = require('express');
+var session = require('express-session')
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const db = require('./database/db');
@@ -6,6 +7,7 @@ const fs = require('fs');
 var nodemailer = require('nodemailer');
 const passport = require('passport');
 const FacebookStrategy = require('passport-facebook').Strategy;
+const TwitterStrategy = require('passport-twitter').Strategy;
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const { registerValidate, emailTestValidate } = require('./helpers/validations');
@@ -20,6 +22,11 @@ require('dotenv').config();
 
 const app = express();
 app.use('*', cors());
+app.use(session({ secret: 'SECRET',
+                    resave: false,
+                    saveUninitialized: true,
+                    cookie: { secure: true } 
+                }));
 app.use(express.json({ limit: '12MB' }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -80,6 +87,28 @@ app.get('/auth/facebook/callback',
 });
 
 /* To emulate creating token on client */
+
+passport.use(new TwitterStrategy({
+    consumerKey: process.env.TWITTER_API_KEY,
+    consumerSecret: process.env.TWITTER_API_KEY_SECRET,
+    callbackURL: "https://localhost:8443/auth/twitter/callback"
+    },
+    function(token, tokenSecret, profile, done) {
+        console.log(token);
+        console.log(profile);
+        done(null, profile);
+    }
+));
+
+app.get('/auth/twitter', passport.authenticate('twitter'));
+
+app.get('/auth/twitter/callback',
+  passport.authenticate('twitter', { failureRedirect: '/home' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    console.log(req.profile);
+    res.json(req.profile);
+});
 
 app.get('/logout',function (req, res){
     req.logout();

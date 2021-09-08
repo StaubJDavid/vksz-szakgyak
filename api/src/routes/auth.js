@@ -346,9 +346,11 @@ router.get('/get-user', verify, (req, res) => {
 passport.use('facebook-token', new FacebookTokenStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    fbGraphVersion: 'v11.0'
+    fbGraphVersion: 'v11.0',
+    passReqToCallback:true
   },
-  function(accessToken, refreshToken, profile, done) {
+  function(req,accessToken, refreshToken, profile, done) {
+      console.log(req.body.thing);
     // console.log(profile);
     db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
             'LEFT JOIN `blacklist` b ON u.email = b.email ' +
@@ -391,7 +393,7 @@ passport.use('facebook-token', new FacebookTokenStrategy({
                             provider_id: profile.id,
                             confirmed: 1,
                             avatar: Buffer.from(response.data, 'binary').toString('base64'),
-                            device_token: ""
+                            device_token: req.body.device_token
                         };
 
                         db.query('INSERT INTO users SET ?', user, (err3, results3) => {
