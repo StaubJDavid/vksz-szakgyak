@@ -91,12 +91,21 @@ app.get('/auth/facebook/callback',
 passport.use(new TwitterStrategy({
     consumerKey: process.env.TWITTER_API_KEY,
     consumerSecret: process.env.TWITTER_API_KEY_SECRET,
-    callbackURL: "https://localhost:8443/auth/twitter/callback"
+    callbackURL: "https://127.0.0.1:8443/auth/twitter/callback"
     },
     function(token, tokenSecret, profile, done) {
         console.log(token);
+        console.log(tokenSecret);
         console.log(profile);
-        done(null, profile);
+        var user = {
+            'name': profile.username,
+            'id' : profile.id,
+            'photo' : profile.photos[0].value,
+            'token': token
+        }
+        // console.log(token);
+        // console.log(profile);
+        done(null, user);
     }
 ));
 
@@ -106,8 +115,9 @@ app.get('/auth/twitter/callback',
   passport.authenticate('twitter', { failureRedirect: '/home' }),
   function(req, res) {
     // Successful authentication, redirect home.
-    console.log(req.profile);
-    res.json(req.profile);
+    console.log(req.user.name);
+    // console.log(req.user);
+    res.json(req.user);
 });
 
 app.get('/logout',function (req, res){

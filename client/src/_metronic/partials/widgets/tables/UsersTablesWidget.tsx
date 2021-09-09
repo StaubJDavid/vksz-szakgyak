@@ -86,6 +86,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                 <th className='min-w-150px'>User</th>
                 <th className='min-w-140px'>Email</th>
                 <th className='min-w-120px'>Phone</th>
+                <th className='min-w-120px'>Provider</th>
                 <th className='min-w-100px text-center'>Actions</th>
               </tr>
             </thead>
@@ -118,6 +119,11 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
                 <td className='text-begin'>                  
                   <div className='text-dark fw-bolder fs-6 d-flex justify-content-start flex-column'>
                     {u.phone}
+                  </div>                   
+                </td>
+                <td className='text-begin'>                  
+                  <div className='text-dark fw-bolder fs-6 d-flex justify-content-start flex-column'>
+                    {u.provider}
                   </div>                   
                 </td>
                 <td>
