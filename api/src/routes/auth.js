@@ -14,6 +14,7 @@ const {registerValidate, loginValidate, emailValidate, idValidate} = require('..
 const Joi = require('joi');
 const FacebookTokenStrategy = require('passport-facebook-token');
 const TwitterTokenStrategy = require('passport-twitter-token');
+const GoogleTokenStrategy = require('passport-google-token').Strategy;
 const passport = require('passport');
 const axios = require('axios');
 
@@ -359,8 +360,7 @@ passport.use('facebook-token', new FacebookTokenStrategy({
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     fbGraphVersion: 'v11.0',
     passReqToCallback:true
-  },
-  function(req,accessToken, refreshToken, profile, done) {
+    },function(req,accessToken, refreshToken, profile, done) {
     db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
             'LEFT JOIN `blacklist` b ON u.email = b.email ' +
             'WHERE u.email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
@@ -442,9 +442,7 @@ passport.use('facebook-token', new FacebookTokenStrategy({
                                                                 results4.map(r => {
                                                                     sql += `(${results3.insertId}, ${r.service_id}),`;
                                                                 });
-                                                                // console.log(sql);
                                                                 var str1 = sql.replace(/,$/,";");
-                                                                // console.log(str1);
 
                                                                 //Execute the notifications populating query
                                                                 db.query(str1, (err5, results5) => {
@@ -471,7 +469,7 @@ passport.use('facebook-token', new FacebookTokenStrategy({
                                             done(error);
                                         })
                                     }else{
-                                        done('Valamilyen error');
+                                        done(`There are more than 0 of people with email: ${profile.emails[0].value} with the provider: facebook`);
                                     } 
                                 }
                             })                               
@@ -479,27 +477,29 @@ passport.use('facebook-token', new FacebookTokenStrategy({
                     }
                 })               
             }else{
-                return done('Blacklisted');
+                return done('Facebook login/register blacklisted');
             }           
         }
     })
-  }
+    }
 ));
 
 router.get('/facebook/token', (req, res) => {
-    passport.authenticate('facebook-token', function (err, accessToken, info) {
-          if(err){
-              if(err.oauthError){
-                  var oauthError = JSON.parse(err.oauthError.data);
-                  res.status(400).json(oauthError.error.message);
-              } else {
-                  res.status(400).json(err);
-              }
-          } else {
-              res.json(accessToken);
-          }
-    })(req, res);
-});
+        passport.authenticate('facebook-token', function (err, accessToken, info) {
+            if(err){
+                if(err.oauthError){
+                    var oauthError = JSON.parse(err.oauthError.data);
+                    res.status(400).json(oauthError.error.message);
+                } else {
+                    res.status(400).json(err);
+                }
+            } else {
+                console.log('Facebook Token all login/register all good');
+                res.json(accessToken);
+            }
+        })(req, res);
+    }
+);
 /* Facebook login VALIDATION/CHECKING ON SERVER */
 
 /* Twitter login VALIDATION/CHECKING ON SERVER */
@@ -508,7 +508,7 @@ passport.use(new TwitterTokenStrategy({
     consumerSecret: process.env.TWITTER_API_KEY_SECRET,
     includeEmail: true,
     passReqToCallback:true
-  }, function(req, token, tokenSecret, profile, done) {
+    }, function(req, token, tokenSecret, profile, done) {
         db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
             'LEFT JOIN `blacklist` b ON u.email = b.email ' +
             'WHERE u.email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
@@ -614,7 +614,7 @@ passport.use(new TwitterTokenStrategy({
                                             done(error);
                                         })
                                     }else{
-                                        done('Valamilyen error');
+                                        done(`There are more than 0 of people with email: ${profile.emails[0].value} with the provider: twitter`);
                                     } 
                                 }
                             })                               
@@ -622,7 +622,7 @@ passport.use(new TwitterTokenStrategy({
                     }
                 })               
             }else{
-                return done('Blacklisted');
+                return done('Twitter login/register blacklisted');
             }           
         }
     })
@@ -630,21 +630,165 @@ passport.use(new TwitterTokenStrategy({
 ));
 
 router.get('/twitter/token', (req, res) => {
-    passport.authenticate('twitter-token', function (err, accessToken, info) {
-          if(err){
-              if(err.oauthError){
-                //   var oauthError = JSON.parse(err.oauthError.data);
-                  res.status(400).json(err.oauthError.data);
-              } else {
-                  res.status(400).json(err);
-              }
-            // res.status(400).json(err);
-          } else {
-              console.log('Gihi');
-              res.json(accessToken);
-          }
-    })(req, res);
-});
+        passport.authenticate('twitter-token', function (err, accessToken, info) {
+            if(err){
+                if(err.oauthError){
+                    res.status(400).json(err.oauthError.data);
+                } else {
+                    res.status(400).json(err);
+                }
+            } else {
+                console.log('Twitter Token all login/register all good');
+                res.json(accessToken);
+            }
+        })(req, res);
+    }
+);
 /* Twitter login VALIDATION/CHECKING ON SERVER */
+
+/* Google login VALIDATION/CHECKING ON SERVER */
+passport.use(new GoogleTokenStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    passReqToCallback: true
+  },
+    function(req, accessToken, refreshToken, profile, done) {
+        console.log(profile);
+        db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+            'WHERE u.email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
+            if(err){
+                console.log('google token login query error resultStart');
+                return done(err);
+            }else{
+                let blacklisted = 0;
+                resultStart.map(r => {
+                    if(r.BlackListEmail !== null){
+                        blacklisted = 1;
+                    }
+                });
+                if(blacklisted === 0){
+                    db.query('SELECT * FROM `users` WHERE email LIKE ? && provider LIKE \'google\'', [profile.emails[0].value], (err, result) => {
+                        if(err){
+                            console.log('google token login query error result');
+                            return done(err);
+                        }else{
+                            if(result.length === 1 && result[0].provider === 'google'){
+                                if(result[0].confirmed === 1){
+                                    console.log('google login');
+                                    const accessToken = jwt.sign({ email: profile.emails[0].value, role: result[0].role, id: result[0].user_id, provider: result[0].provider},
+                                        process.env.SECRET_KEY,
+                                        {expiresIn: "30m"}
+                                    );
+                                    done(null,accessToken);
+                                }else{
+                                    console.log('google token login user blacklisted or unconfirmed');
+                                    return done('google token login user blacklisted or unconfirmed');
+                                }
+                            }else{
+                                db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
+                                'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+                                'WHERE u.email LIKE ? && u.provider LIKE \'google\'', [profile.emails[0].value], (err, result1) => {
+                                    if(err){
+                                        console.log('google token register query error 1');
+                                        return done(err);
+                                    }else{
+                                        if(result1.length === 0){
+                                            console.log('google registering');
+                                            axios.get(profile._json.picture,{responseType: 'arraybuffer'})
+                                            .then( response => {
+                                                const user = {
+                                                    email: profile.emails[0].value,
+                                                    last_name: profile.name.familyName, 
+                                                    first_name: profile.name.givenName, 
+                                                    pw_hash: "",
+                                                    zip: 0000,
+                                                    city: "",
+                                                    street: "",
+                                                    house_number: "",
+                                                    phone: "",
+                                                    role: 'user',
+                                                    provider: 'google',
+                                                    provider_id: profile.id,
+                                                    confirmed: 1,
+                                                    avatar: Buffer.from(response.data, 'binary').toString('base64'),
+                                                    device_token: req.body.device_token
+                                                };
+                            
+                                                db.query('INSERT INTO users SET ?', user, (err3, results3) => {
+                                                    if(err3){
+                                                        console.log(err3);
+                                                        done(err3);
+                                                    }else{
+                                                        console.log('InsertedID: ' + results3.insertId);
+                                                        //Get all of the news services 
+                                                        db.query('SELECT * FROM `news_services`', (err4, results4) => {
+                                                            if(err4){
+                                                                console.log(err4);
+                                                                done(err4)
+                                                            }else{
+                                                                //Make the notifications populating query
+                                                                let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
+                                                                results4.map(r => {
+                                                                    sql += `(${results3.insertId}, ${r.service_id}),`;
+                                                                });
+                                                                // console.log(sql);
+                                                                var str1 = sql.replace(/,$/,";");
+                                                                // console.log(str1);
+                            
+                                                                //Execute the notifications populating query
+                                                                db.query(str1, (err5, results5) => {
+                                                                    if(err5){
+                                                                        console.log(err5);
+                                                                        done(err5);
+                                                                    }else{
+                                                                        console.log(results5);
+                                                                        const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'google'},
+                                                                            process.env.SECRET_KEY,
+                                                                            {expiresIn: "30m"}
+                                                                        );
+                                                                        done(null,accessToken);                                           
+                                                                    }
+                                                                });                                       
+                                                            }       
+                                                        });                               
+                                                    }
+                                                });
+                                            })
+                                            .catch(function (error){
+                                                done(error);
+                                            })
+                                        }else{
+                                            done(`There are more than 0 of people with email: ${profile.emails[0].value} with the provider: google`);
+                                        } 
+                                    }
+                                })                               
+                            }
+                        }
+                    })               
+                }else{
+                    return done('Google login/register blacklisted');
+                }           
+            }
+        })
+    }
+));
+
+router.get('/google/token', (req, res) => {
+        passport.authenticate('google-token', function (err, accessToken, info) {
+            if(err){
+                if(err.oauthError){
+                    res.status(400).json(err.oauthError.data);
+                } else {
+                    res.status(400).json(err);
+                }
+            } else {
+                console.log('Google Token all login/register all good');
+                res.json(accessToken);
+            }
+        })(req, res);
+    }
+);
+/* Google login VALIDATION/CHECKING ON SERVER */
 
 module.exports = router;

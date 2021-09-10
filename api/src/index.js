@@ -8,6 +8,7 @@ var nodemailer = require('nodemailer');
 const passport = require('passport');
 const FacebookStrategy = require('passport-facebook').Strategy;
 const TwitterStrategy = require('passport-twitter').Strategy;
+const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const { registerValidate, emailTestValidate } = require('./helpers/validations');
@@ -50,6 +51,7 @@ app.get('/', (req, res) => {
 
 
 /* To emulate creating token on client */
+//Facebook
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
@@ -87,7 +89,7 @@ app.get('/auth/facebook/callback',
 });
 
 /* To emulate creating token on client */
-
+//Twitter
 passport.use(new TwitterStrategy({
     consumerKey: process.env.TWITTER_API_KEY,
     consumerSecret: process.env.TWITTER_API_KEY_SECRET,
@@ -120,12 +122,36 @@ app.get('/auth/twitter/callback',
     res.json(req.user);
 });
 
+//Google
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "https://localhost:8443/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+        console.log(profile);
+        var user = {
+            'profile': profile,
+            'accessToken': accessToken
+        }
+       done(null, user);
+  }
+));
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['openid', 'profile', 'email', 'https://www.googleapis.com/auth/plus.login'] }));
+
+app.get('/auth/google/callback',passport.authenticate('google', { failureRedirect: '/login' }),
+    function(req, res) {
+        res.json(req.user);
+    }
+);
+
+//Social Login End
 app.get('/logout',function (req, res){
     req.logout();
     res.send('Logged out?');
 });
 
-//Social Login End
 app.get('/test', (req, res) => {
     axios.get('https://graph.facebook.com/v11.0/3198393003728480/picture?type=large')
     .then(function (response){
