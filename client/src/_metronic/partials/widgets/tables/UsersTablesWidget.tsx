@@ -25,7 +25,7 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
       const Users = async () => {
         try {
           const response = await getUsers();
-          //usersStuff = ;
+          console.log(response.data.users.length);
           setData(response.data.users);
         } catch (error) {
           console.log(error)
@@ -44,22 +44,37 @@ const UsersTablesWidget: React.FC<Props> = ({className}) => {
     })
   }
 
-  function onSendMessageClick(id:number){
-    // console.log('Clicked');
-    let index = users.findIndex((element:UserModel) => element.id === id);
-    // console.log(users[index]);
-    history.push({
-      pathname: `/send-user-notification/${users[index].id}`
-    })
-  }
+  // function onSendMessageClick(id:number){
+  //   // console.log('Clicked');
+  //   let index = users.findIndex((element:UserModel) => element.id === id);
+  //   // console.log(users[index]);
+  //   history.push({
+  //     pathname: `/send-user-notification/${users[index].id}`
+  //   })
+  // }
 
   function updateData(user:UserModel){
-    let index = users.findIndex((element:UserModel) => element.email === user.email)
+    // let index = users.findIndex((element:UserModel) => element.id === user.id)
+    // setData([ ...users.slice(0,index),
+    //   Object.assign({}, users[index], user),
+    //   ...users.slice(index+1)
+    // ]);
+    // console.log(`Users: ${users.length}`);
+
+    for(let i = 0; i < users.length; i++){
+      if(users[i].email === user.email){
+        let userUpdated:UserModel = users[i];
+        userUpdated.blacklisted = userUpdated.blacklisted?0:1;
+        // console.log(`${userUpdated.id} email: ${userUpdated.email} Blacklisted: ${userUpdated.blacklisted}`);
+
+        setData([ ...users.slice(0,i),
+          Object.assign({}, users[i], userUpdated),
+          ...users.slice(i+1)
+        ]);
+      }
+    }
     
-    setData([ ...users.slice(0,index),
-              Object.assign({}, users[index], user),
-              ...users.slice(index+1)
-            ]);
+    
   }
 
   return (
