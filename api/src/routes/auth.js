@@ -361,26 +361,24 @@ passport.use('facebook-token', new FacebookTokenStrategy({
     fbGraphVersion: 'v11.0',
     passReqToCallback:true
     },function(req,accessToken, refreshToken, profile, done) {
-    db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-            'WHERE u.email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
+    //
+    db.query('SELECT * FROM `blacklist` WHERE email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
         if(err){
             console.log('facebook token login query error resultStart');
             return done(err);
         }else{
             let blacklisted = 0;
-            resultStart.map(r => {
-                if(r.BlackListEmail !== null){
-                    blacklisted = 1;
-                }
-            });
+            if(resultStart.length > 0){
+                blacklisted = 1;
+            }
+
             if(blacklisted === 0){
                 db.query('SELECT * FROM `users` WHERE email LIKE ? && provider LIKE \'facebook\'', [profile.emails[0].value], (err, result) => {
                     if(err){
                         console.log('facebook token login query error result');
                         return done(err);
                     }else{
-                        if(result.length === 1 && result[0].provider === 'facebook'){
+                        if(result.length === 1){
                             if(result[0].confirmed === 1){
                                 console.log('facebook login');
                                 const accessToken = jwt.sign({ email: profile.emails[0].value, role: result[0].role, id: result[0].user_id, provider: result[0].provider},
@@ -392,87 +390,76 @@ passport.use('facebook-token', new FacebookTokenStrategy({
                                 console.log('facebook token login user blacklisted or unconfirmed');
                                 return done('facebook token login user blacklisted or unconfirmed');
                             }
+                        }else if(result.length === 0){
+                            console.log('facebook registering');
+                            axios.get(profile.photos[0].value)
+                            .then(function (response){
+                                console.log(response.request.res.responseUrl);
+                                axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
+                                .then( response => {
+                                    const user = {
+                                        email: profile.emails[0].value,
+                                        last_name: profile.name.familyName, 
+                                        first_name: profile.name.middleName === ""? profile.name.givenName : (profile.name.givenName + " " + profile.name.middleName), 
+                                        pw_hash: "",
+                                        zip: 0000,
+                                        city: "",
+                                        street: "",
+                                        house_number: "",
+                                        phone: "",
+                                        role: 'user',
+                                        provider: 'facebook',
+                                        provider_id: profile.id,
+                                        confirmed: 1,
+                                        avatar: Buffer.from(response.data, 'binary').toString('base64'),
+                                        device_token: req.body.device_token
+                                    };
+
+                                    db.query('INSERT INTO users SET ?', user, (err3, results3) => {
+                                        if(err3){
+                                            console.log(err3);
+                                            done(err3);
+                                        }else{
+                                            console.log('InsertedID: ' + results3.insertId);
+                                            //Get all of the news services 
+                                            db.query('SELECT * FROM `news_services`', (err4, results4) => {
+                                                if(err4){
+                                                    console.log(err4);
+                                                    done(err4)
+                                                }else{
+                                                    //Make the notifications populating query
+                                                    let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
+                                                    results4.map(r => {
+                                                        sql += `(${results3.insertId}, ${r.service_id}),`;
+                                                    });
+                                                    var str1 = sql.replace(/,$/,";");
+
+                                                    //Execute the notifications populating query
+                                                    db.query(str1, (err5, results5) => {
+                                                        if(err5){
+                                                            console.log(err5);
+                                                            done(err5);
+                                                        }else{
+                                                            console.log(results5);
+                                                            const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'facebook'},
+                                                                process.env.SECRET_KEY,
+                                                                {expiresIn: "30m"}
+                                                            );
+                                                            done(null,accessToken);                                           
+                                                        }
+                                                    });                                       
+                                                }       
+                                            });                               
+                                        }
+                                    });
+                                }).catch(function (error){
+                                    done(error);
+                                })
+                            }).catch(function (error){
+                                done(error);
+                            })
                         }else{
-                            db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-                            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-                            'WHERE u.email LIKE ? && u.provider LIKE \'facebook\'', [profile.emails[0].value], (err, result1) => {
-                                if(err){
-                                    console.log('facebook token register query error 1');
-                                    return done(err);
-                                }else{
-                                    if(result1.length === 0){
-                                        console.log('facebook registering');
-                                        axios.get(profile.photos[0].value)
-                                        .then(function (response){
-                                            console.log(response.request.res.responseUrl);
-                                            axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
-                                            .then( response => {
-                                                const user = {
-                                                    email: profile.emails[0].value,
-                                                    last_name: profile.name.familyName, 
-                                                    first_name: profile.name.middleName === ""? profile.name.givenName : (profile.name.givenName + " " + profile.name.middleName), 
-                                                    pw_hash: "",
-                                                    zip: 0000,
-                                                    city: "",
-                                                    street: "",
-                                                    house_number: "",
-                                                    phone: "",
-                                                    role: 'user',
-                                                    provider: 'facebook',
-                                                    provider_id: profile.id,
-                                                    confirmed: 1,
-                                                    avatar: Buffer.from(response.data, 'binary').toString('base64'),
-                                                    device_token: req.body.device_token
-                                                };
-
-                                                db.query('INSERT INTO users SET ?', user, (err3, results3) => {
-                                                    if(err3){
-                                                        console.log(err3);
-                                                        done(err3);
-                                                    }else{
-                                                        console.log('InsertedID: ' + results3.insertId);
-                                                        //Get all of the news services 
-                                                        db.query('SELECT * FROM `news_services`', (err4, results4) => {
-                                                            if(err4){
-                                                                console.log(err4);
-                                                                done(err4)
-                                                            }else{
-                                                                //Make the notifications populating query
-                                                                let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
-                                                                results4.map(r => {
-                                                                    sql += `(${results3.insertId}, ${r.service_id}),`;
-                                                                });
-                                                                var str1 = sql.replace(/,$/,";");
-
-                                                                //Execute the notifications populating query
-                                                                db.query(str1, (err5, results5) => {
-                                                                    if(err5){
-                                                                        console.log(err5);
-                                                                        done(err5);
-                                                                    }else{
-                                                                        console.log(results5);
-                                                                        const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'facebook'},
-                                                                            process.env.SECRET_KEY,
-                                                                            {expiresIn: "30m"}
-                                                                        );
-                                                                        done(null,accessToken);                                           
-                                                                    }
-                                                                });                                       
-                                                            }       
-                                                        });                               
-                                                    }
-                                                });
-                                            }).catch(function (error){
-                                                done(error);
-                                            })
-                                        }).catch(function (error){
-                                            done(error);
-                                        })
-                                    }else{
-                                        done(`There are more than 0 of people with email: ${profile.emails[0].value} with the provider: facebook`);
-                                    } 
-                                }
-                            })                               
+                            done(`There are more than 0 and 1 results with email: ${profile.emails[0].value} with the provider: facebook`);
                         }
                     }
                 })               
@@ -509,26 +496,23 @@ passport.use(new TwitterTokenStrategy({
     includeEmail: true,
     passReqToCallback:true
     }, function(req, token, tokenSecret, profile, done) {
-        db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-            'WHERE u.email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
+        db.query('SELECT * FROM `blacklist` WHERE email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
         if(err){
             console.log('Twitter token login query error resultStart');
             return done(err);
         }else{
             let blacklisted = 0;
-            resultStart.map(r => {
-                if(r.BlackListEmail !== null){
-                    blacklisted = 1;
-                }
-            });
+            if(resultStart.length > 0){
+                blacklisted = 1;
+            }
+
             if(blacklisted === 0){
                 db.query('SELECT * FROM `users` WHERE email LIKE ? && provider LIKE \'twitter\'', [profile.emails[0].value], (err, result) => {
                     if(err){
                         console.log('Twitter token login query error result');
                         return done(err);
                     }else{
-                        if(result.length === 1 && result[0].provider === 'twitter'){
+                        if(result.length === 1){
                             if(result[0].confirmed === 1){
                                 console.log('twitter login');
                                 const accessToken = jwt.sign({ email: profile.emails[0].value, role: result[0].role, id: result[0].user_id, provider: result[0].provider},
@@ -540,84 +524,73 @@ passport.use(new TwitterTokenStrategy({
                                 console.log('Twitter token login user blacklisted or unconfirmed');
                                 return done('Twitter token login user blacklisted or unconfirmed');
                             }
-                        }else{
-                            db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-                            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-                            'WHERE u.email LIKE ? && u.provider LIKE \'twitter\'', [profile.emails[0].value], (err, result1) => {
-                                if(err){
-                                    console.log('Twitter token register query error 1');
-                                    return done(err);
-                                }else{
-                                    if(result1.length === 0){
-                                        console.log('twitter registering');
-                                        axios.get(profile.photos[0].value,{responseType: 'arraybuffer'})
-                                        .then( response => {
-                                            const user = {
-                                                email: profile.emails[0].value,
-                                                last_name: profile.displayName, 
-                                                first_name: "", 
-                                                pw_hash: "",
-                                                zip: 0000,
-                                                city: "",
-                                                street: "",
-                                                house_number: "",
-                                                phone: "",
-                                                role: 'user',
-                                                provider: 'twitter',
-                                                provider_id: profile.id,
-                                                confirmed: 1,
-                                                avatar: Buffer.from(response.data, 'binary').toString('base64'),
-                                                device_token: req.body.device_token
-                                            };
-                        
-                                            db.query('INSERT INTO users SET ?', user, (err3, results3) => {
-                                                if(err3){
-                                                    console.log(err3);
-                                                    done(err3);
-                                                }else{
-                                                    console.log('InsertedID: ' + results3.insertId);
-                                                    //Get all of the news services 
-                                                    db.query('SELECT * FROM `news_services`', (err4, results4) => {
-                                                        if(err4){
-                                                            console.log(err4);
-                                                            done(err4)
-                                                        }else{
-                                                            //Make the notifications populating query
-                                                            let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
-                                                            results4.map(r => {
-                                                                sql += `(${results3.insertId}, ${r.service_id}),`;
-                                                            });
-                                                            // console.log(sql);
-                                                            var str1 = sql.replace(/,$/,";");
-                                                            // console.log(str1);
-                        
-                                                            //Execute the notifications populating query
-                                                            db.query(str1, (err5, results5) => {
-                                                                if(err5){
-                                                                    console.log(err5);
-                                                                    done(err5);
-                                                                }else{
-                                                                    console.log(results5);
-                                                                    const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'twitter'},
-                                                                        process.env.SECRET_KEY,
-                                                                        {expiresIn: "30m"}
-                                                                    );
-                                                                    done(null,accessToken);                                           
-                                                                }
-                                                            });                                       
-                                                        }       
-                                                    });                               
-                                                }
-                                            });
-                                        })
-                                        .catch(function (error){
-                                            done(error);
-                                        })
+                        }else if(result.length === 0){
+                            console.log('twitter registering');
+                            axios.get(profile.photos[0].value,{responseType: 'arraybuffer'})
+                            .then( response => {
+                                const user = {
+                                    email: profile.emails[0].value,
+                                    last_name: profile.displayName, 
+                                    first_name: "", 
+                                    pw_hash: "",
+                                    zip: 0000,
+                                    city: "",
+                                    street: "",
+                                    house_number: "",
+                                    phone: "",
+                                    role: 'user',
+                                    provider: 'twitter',
+                                    provider_id: profile.id,
+                                    confirmed: 1,
+                                    avatar: Buffer.from(response.data, 'binary').toString('base64'),
+                                    device_token: req.body.device_token
+                                };
+            
+                                db.query('INSERT INTO users SET ?', user, (err3, results3) => {
+                                    if(err3){
+                                        console.log(err3);
+                                        done(err3);
                                     }else{
-                                        done(`There are more than 0 of people with email: ${profile.emails[0].value} with the provider: twitter`);
-                                    } 
-                                }
-                            })                               
+                                        console.log('InsertedID: ' + results3.insertId);
+                                        //Get all of the news services 
+                                        db.query('SELECT * FROM `news_services`', (err4, results4) => {
+                                            if(err4){
+                                                console.log(err4);
+                                                done(err4)
+                                            }else{
+                                                //Make the notifications populating query
+                                                let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
+                                                results4.map(r => {
+                                                    sql += `(${results3.insertId}, ${r.service_id}),`;
+                                                });
+                                                // console.log(sql);
+                                                var str1 = sql.replace(/,$/,";");
+                                                // console.log(str1);
+            
+                                                //Execute the notifications populating query
+                                                db.query(str1, (err5, results5) => {
+                                                    if(err5){
+                                                        console.log(err5);
+                                                        done(err5);
+                                                    }else{
+                                                        console.log(results5);
+                                                        const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'twitter'},
+                                                            process.env.SECRET_KEY,
+                                                            {expiresIn: "30m"}
+                                                        );
+                                                        done(null,accessToken);                                           
+                                                    }
+                                                });                                       
+                                            }       
+                                        });                               
+                                    }
+                                });
+                            })
+                            .catch(function (error){
+                                done(error);
+                            })
+                        }else{
+                            done(`There are more than 0 and 1 people with email: ${profile.emails[0].value} with the provider: twitter`);
                         }
                     }
                 })               
@@ -654,26 +627,23 @@ passport.use(new GoogleTokenStrategy({
   },
     function(req, accessToken, refreshToken, profile, done) {
         console.log(profile);
-        db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-            'WHERE u.email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
+        db.query('SELECT * FROM `blacklist` WHERE email LIKE ?', [profile.emails[0].value], (err, resultStart) => {
             if(err){
                 console.log('google token login query error resultStart');
                 return done(err);
             }else{
                 let blacklisted = 0;
-                resultStart.map(r => {
-                    if(r.BlackListEmail !== null){
-                        blacklisted = 1;
-                    }
-                });
+                if(resultStart.length > 0){
+                    blacklisted = 1;
+                }
+
                 if(blacklisted === 0){
                     db.query('SELECT * FROM `users` WHERE email LIKE ? && provider LIKE \'google\'', [profile.emails[0].value], (err, result) => {
                         if(err){
                             console.log('google token login query error result');
                             return done(err);
                         }else{
-                            if(result.length === 1 && result[0].provider === 'google'){
+                            if(result.length === 1){
                                 if(result[0].confirmed === 1){
                                     console.log('google login');
                                     const accessToken = jwt.sign({ email: profile.emails[0].value, role: result[0].role, id: result[0].user_id, provider: result[0].provider},
@@ -685,85 +655,74 @@ passport.use(new GoogleTokenStrategy({
                                     console.log('google token login user blacklisted or unconfirmed');
                                     return done('google token login user blacklisted or unconfirmed');
                                 }
-                            }else{
-                                db.query('SELECT u.*, b.email AS BlackListEmail FROM `users` u '+ 
-                                'LEFT JOIN `blacklist` b ON u.email = b.email ' +
-                                'WHERE u.email LIKE ? && u.provider LIKE \'google\'', [profile.emails[0].value], (err, result1) => {
-                                    if(err){
-                                        console.log('google token register query error 1');
-                                        return done(err);
-                                    }else{
-                                        if(result1.length === 0){
-                                            console.log('google registering');
-                                            axios.get(profile._json.picture,{responseType: 'arraybuffer'})
-                                            .then( response => {
-                                                const user = {
-                                                    email: profile.emails[0].value,
-                                                    last_name: profile.name.familyName, 
-                                                    first_name: profile.name.givenName, 
-                                                    pw_hash: "",
-                                                    zip: 0000,
-                                                    city: "",
-                                                    street: "",
-                                                    house_number: "",
-                                                    phone: "",
-                                                    role: 'user',
-                                                    provider: 'google',
-                                                    provider_id: profile.id,
-                                                    confirmed: 1,
-                                                    avatar: Buffer.from(response.data, 'binary').toString('base64'),
-                                                    device_token: req.body.device_token
-                                                };
-                            
-                                                db.query('INSERT INTO users SET ?', user, (err3, results3) => {
-                                                    if(err3){
-                                                        console.log(err3);
-                                                        done(err3);
-                                                    }else{
-                                                        console.log('InsertedID: ' + results3.insertId);
-                                                        //Get all of the news services 
-                                                        db.query('SELECT * FROM `news_services`', (err4, results4) => {
-                                                            if(err4){
-                                                                console.log(err4);
-                                                                done(err4)
-                                                            }else{
-                                                                //Make the notifications populating query
-                                                                let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
-                                                                results4.map(r => {
-                                                                    sql += `(${results3.insertId}, ${r.service_id}),`;
-                                                                });
-                                                                // console.log(sql);
-                                                                var str1 = sql.replace(/,$/,";");
-                                                                // console.log(str1);
-                            
-                                                                //Execute the notifications populating query
-                                                                db.query(str1, (err5, results5) => {
-                                                                    if(err5){
-                                                                        console.log(err5);
-                                                                        done(err5);
-                                                                    }else{
-                                                                        console.log(results5);
-                                                                        const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'google'},
-                                                                            process.env.SECRET_KEY,
-                                                                            {expiresIn: "30m"}
-                                                                        );
-                                                                        done(null,accessToken);                                           
-                                                                    }
-                                                                });                                       
-                                                            }       
-                                                        });                               
-                                                    }
-                                                });
-                                            })
-                                            .catch(function (error){
-                                                done(error);
-                                            })
+                            }else if(result.length === 0){
+                                console.log('google registering');
+                                axios.get(profile._json.picture,{responseType: 'arraybuffer'})
+                                .then( response => {
+                                    const user = {
+                                        email: profile.emails[0].value,
+                                        last_name: profile.name.familyName, 
+                                        first_name: profile.name.givenName, 
+                                        pw_hash: "",
+                                        zip: 0000,
+                                        city: "",
+                                        street: "",
+                                        house_number: "",
+                                        phone: "",
+                                        role: 'user',
+                                        provider: 'google',
+                                        provider_id: profile.id,
+                                        confirmed: 1,
+                                        avatar: Buffer.from(response.data, 'binary').toString('base64'),
+                                        device_token: req.body.device_token
+                                    };
+                
+                                    db.query('INSERT INTO users SET ?', user, (err3, results3) => {
+                                        if(err3){
+                                            console.log(err3);
+                                            done(err3);
                                         }else{
-                                            done(`There are more than 0 of people with email: ${profile.emails[0].value} with the provider: google`);
-                                        } 
-                                    }
-                                })                               
-                            }
+                                            console.log('InsertedID: ' + results3.insertId);
+                                            //Get all of the news services 
+                                            db.query('SELECT * FROM `news_services`', (err4, results4) => {
+                                                if(err4){
+                                                    console.log(err4);
+                                                    done(err4)
+                                                }else{
+                                                    //Make the notifications populating query
+                                                    let sql = 'INSERT INTO `user_notifs` (user_id, service_id) VALUES ';
+                                                    results4.map(r => {
+                                                        sql += `(${results3.insertId}, ${r.service_id}),`;
+                                                    });
+                                                    // console.log(sql);
+                                                    var str1 = sql.replace(/,$/,";");
+                                                    // console.log(str1);
+                
+                                                    //Execute the notifications populating query
+                                                    db.query(str1, (err5, results5) => {
+                                                        if(err5){
+                                                            console.log(err5);
+                                                            done(err5);
+                                                        }else{
+                                                            console.log(results5);
+                                                            const accessToken = jwt.sign({ email: profile.emails[0].value, role: 'user', id: results3.insertId, provider: 'google'},
+                                                                process.env.SECRET_KEY,
+                                                                {expiresIn: "30m"}
+                                                            );
+                                                            done(null,accessToken);                                           
+                                                        }
+                                                    });                                       
+                                                }       
+                                            });                               
+                                        }
+                                    });
+                                })
+                                .catch(function (error){
+                                    done(error);
+                                })
+                            }else{
+                                done(`There are more than 0 and 1 people with email: ${profile.emails[0].value} with the provider: google`);
+                            } 
                         }
                     })               
                 }else{
