@@ -10,6 +10,8 @@ var nodemailer = require('nodemailer');
 const { json } = require('express');
 const jwt_decode = require('jwt-decode');
 const sendEmailVerification = require('../helpers/emailVerification');
+const passwordReset = require('../helpers/passwordReset');
+const sendEmail = require('../helpers/sendEmail');
 const {registerValidate, loginValidate, emailValidate, idValidate} = require('../helpers/validations');
 const Joi = require('joi');
 const FacebookTokenStrategy = require('passport-facebook-token');
@@ -17,6 +19,7 @@ const TwitterTokenStrategy = require('passport-twitter-token');
 const GoogleTokenStrategy = require('passport-google-token').Strategy;
 const passport = require('passport');
 const axios = require('axios');
+const randomstring = require("randomstring");
 
 require('dotenv').config();
 
@@ -219,31 +222,35 @@ router.get('/confirmation/:token', (req, res) => {
                 return res.status(403).json("Token is invalid");
             }
             var decoded = jwt_decode(token);
-            db.query('SELECT * FROM users WHERE email LIKE ?', [decoded.user], (err, results) => {
-                if(err){
-                    console.log('Confirmation select user query error');
-                    res.status(400).json('Confirmation select user query error');
-                }else{
-                    if(results.length === 1){
-                        if(results[0].confirmed === 0){
-                            db.query('UPDATE users SET confirmed = 1 WHERE email LIKE ?', [decoded.user], (err, results) => {
-                                if(err){
-                                    console.log('Email confirmation: Updating user\'s status failed');
-                                    res.status(400).json('Email confirmation: Updating user\'s status failed');
-                                }else{
-                                    return res.redirect(`${process.env.CLIENT_URL}/auth/login`);
-                                }
-                            });
-                        }else{
-                            console.log('Email confirmation: Email already confirmed');
-                            res.status(400).json('Email confirmation: Email already confirmed');
-                        }
+            if(decoded.ver === "email"){
+                db.query('SELECT * FROM users WHERE email LIKE ? AND provider LIKE \'vksz\'', [decoded.user], (err, results) => {
+                    if(err){
+                        console.log('Confirmation select user query error');
+                        res.status(400).json('Confirmation select user query error');
                     }else{
-                        console.log('Email confirmation: There\'s no such user');
-                        res.status(400).json('Email confirmation: There\'s no such user');
+                        if(results.length === 1){
+                            if(results[0].confirmed === 0){
+                                db.query('UPDATE users SET confirmed = 1 WHERE email LIKE ?', [decoded.user], (err, results) => {
+                                    if(err){
+                                        console.log('Email confirmation: Updating user\'s status failed');
+                                        res.status(400).json('Email confirmation: Updating user\'s status failed');
+                                    }else{
+                                        return res.redirect(`${process.env.CLIENT_URL}/auth/login`);
+                                    }
+                                });
+                            }else{
+                                console.log('Email confirmation: Email already confirmed');
+                                res.status(400).json('Email confirmation: Email already confirmed');
+                            }
+                        }else{
+                            console.log('Email confirmation: There\'s no such user');
+                            res.status(400).json('Email confirmation: There\'s no such user');
+                        }
                     }
-                }
-            });
+                });
+            }else{
+                res.status(400).json("Wrong token ver");
+            }           
         });
     } else{
         res.status(401).json("Not authenticated");
@@ -256,7 +263,7 @@ router.post('/confirmation', (req, res) => {
     });
     
     if(!error){
-        db.query('SELECT * FROM users WHERE email LIKE ?', [req.body.email], (err, results)=>{
+        db.query('SELECT * FROM users WHERE email LIKE ? AND provider LIKE \'vksz\'', [req.body.email], (err, results)=>{
             if(err){
                 console.log('Confirmation query error');
                 res.status(400).json('Confirmation query error');
@@ -276,6 +283,90 @@ router.post('/confirmation', (req, res) => {
                         res.status(400).json('Email already confirmed');
                     }
                     
+                }
+            }
+        });
+    }else{
+        console.log('Error:')
+        console.log(error);
+        res.status(400).json(error.message);
+    }   
+});
+
+//Forgot password/reset password
+router.get('/reset-password/:token', (req, res) => {
+    const token = req.params.token;
+
+    if(token){
+        jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+            if(err){
+                return res.status(403).json("Token is invalid");
+            }
+            var decoded = jwt_decode(token);
+            if(decoded.ver === "password"){
+                db.query('SELECT * FROM users WHERE email LIKE ? AND provider LIKE \'vksz\'', [decoded.user], (err, results) => {
+                    if(err){
+                        console.log('Confirmation select user query error');
+                        res.status(400).json('Confirmation select user query error');
+                    }else{
+                        if(results.length === 1){
+                            const pass = randomstring.generate({
+                                length: 8,
+                                charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+                            });
+
+                            const hash = bcrypt.hashSync(pass, saltRounds); 
+
+                            db.query('UPDATE users SET pw_hash = ? WHERE email LIKE ? AND provider LIKE \'vksz\'', [hash, decoded.user], (err, results) => {
+                                if(err){
+                                    console.log('Password reset query failed');
+                                    res.status(400).json('Password reset query failed');
+                                }else{
+                                    sendEmail(decoded.user, "Password Reset Successful", `Your password has been reset: ${pass}\nPlease change it quickly once you login`);
+
+                                    res.json({result: true});
+                                }
+                            });
+                        }else{
+                            console.log('Email confirmation: There\'s no such user');
+                            res.status(400).json('Email confirmation: There\'s no such user');
+                        }
+                    }
+                });
+            }else{
+                res.status(400).json("Wrong token ver");
+            }           
+        });
+    } else{
+        res.status(401).json("Not authenticated");
+    }
+});
+
+router.post('/reset-password', (req, res) => {
+    const { error, value } = emailValidate.validate({ 
+        email: req.body.email
+    });
+    
+    if(!error){
+        db.query('SELECT * FROM users WHERE email LIKE ? AND provider LIKE \'vksz\'', [req.body.email], (err, results)=>{
+            if(err){
+                console.log('Confirmation query error');
+                res.status(400).json('Confirmation query error');
+            }else{
+                if(results.length === 1){
+    
+                    passwordReset(req.body.email);
+                
+                    res.json({result: true});
+    
+                }else{
+                    if(results.length === 0){
+                        console.log('There\'s no such email registered');
+                        res.status(400).json('There\'s no such email registered');
+                    }else{
+                        console.log('Reset password something wrong');
+                        res.status(400).json('Reset password something wrong');
+                    }                   
                 }
             }
         });

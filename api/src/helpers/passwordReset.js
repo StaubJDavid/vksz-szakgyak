@@ -4,7 +4,7 @@ var nodemailer = require('nodemailer');
 
 require('dotenv').config();
 
-function sendEmailVerification(email){
+function passwordReset(email){
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,
@@ -16,21 +16,21 @@ function sendEmailVerification(email){
 
     const toEmail = email;
 
-    const emailToken = jwt.sign(
-        {user: email, ver: "email"},
+    const passwordToken = jwt.sign(
+        {user: email, ver: "password"},
         process.env.SECRET_KEY,
         {expiresIn: "1h"},
     );
 
-    const url = `${process.env.API_URL}/api/auth/confirmation/${emailToken}`;
+    const url = `${process.env.API_URL}/api/auth/reset-password/${passwordToken}`;
 
-    // console.log(emailToken);
+    // console.log(passwordToken);
 
     var mailOptions = {
         from: process.env.EMAIL_USERNAME,
         to: toEmail,
-        subject: 'Confirmation email',
-        html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`
+        subject: 'Password Reset',
+        html: `Please click this url to reset your password: <a href="${url}">${url}</a>`
     };
 
     transporter.sendMail(mailOptions, function(error, info){
@@ -38,10 +38,10 @@ function sendEmailVerification(email){
             console.log(error);
             console.log('Sending false');
         } else {
-            console.log('Sent email verification');
+            console.log('Sent password reset email');
             console.log('Email sent: ' + info.response);
         }
     });    
 }
 
-module.exports = sendEmailVerification;
+module.exports = passwordReset;

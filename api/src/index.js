@@ -18,6 +18,7 @@ var privateKey  = fs.readFileSync('ssl/selfsigned.key', 'utf8');
 var certificate = fs.readFileSync('ssl/selfsigned.crt', 'utf8');
 var credentials = {key: privateKey, cert: certificate};
 const axios = require('axios');
+const randomstring = require("randomstring");
 
 require('dotenv').config();
 
@@ -46,6 +47,17 @@ app.get('/', (req, res) => {
 });
 
 //Helpers/Tests
+
+app.get('/rand', (req, res) => {
+    let strings = [];
+    for(let i = 0; i < 100; i++){
+        strings.push(randomstring.generate({
+            length: 8,
+            charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+          }));
+    }
+    res.json(strings);
+});
 
 //Social Login Begin
 

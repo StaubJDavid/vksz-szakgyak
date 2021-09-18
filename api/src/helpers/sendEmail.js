@@ -1,10 +1,8 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
 var nodemailer = require('nodemailer');
 
 require('dotenv').config();
 
-function sendEmailVerification(email){
+function sendEmail(email, subject, message){
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,
@@ -14,23 +12,11 @@ function sendEmailVerification(email){
         }
     });
 
-    const toEmail = email;
-
-    const emailToken = jwt.sign(
-        {user: email, ver: "email"},
-        process.env.SECRET_KEY,
-        {expiresIn: "1h"},
-    );
-
-    const url = `${process.env.API_URL}/api/auth/confirmation/${emailToken}`;
-
-    // console.log(emailToken);
-
     var mailOptions = {
         from: process.env.EMAIL_USERNAME,
-        to: toEmail,
-        subject: 'Confirmation email',
-        html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`
+        to: email,
+        subject: subject,
+        html: message
     };
 
     transporter.sendMail(mailOptions, function(error, info){
@@ -38,10 +24,10 @@ function sendEmailVerification(email){
             console.log(error);
             console.log('Sending false');
         } else {
-            console.log('Sent email verification');
+            console.log('Sent email');
             console.log('Email sent: ' + info.response);
         }
     });    
 }
 
-module.exports = sendEmailVerification;
+module.exports = sendEmail;
