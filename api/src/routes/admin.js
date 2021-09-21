@@ -117,7 +117,8 @@ router.get('/get-users', verify, (req, res) => {
     if(!error){
         if(req.user.role === 'admin'){
             db.query('SELECT u.*, b.blacklist_id, b.email as BlackListEmail FROM `users` u '+
-            'LEFT JOIN `blacklist` b ON u.user_id = b.blacklist_id', (err, results) => {
+            'LEFT JOIN `blacklist` b ON u.email LIKE b.email ' +
+            'GROUP BY u.user_id', (err, results) => {
                 if(err){
                     console.log(err);
                     res.status(400).json(err);
@@ -130,6 +131,7 @@ router.get('/get-users', verify, (req, res) => {
                             lastname: r.last_name,
                             pic: r.avatar,
                             phone: r.phone,
+                            provider: r.provider,
                             blacklisted: (r.BlackListEmail === null ? 0:1),
                             zip: r.zip,
                             city: r.city,
@@ -162,24 +164,36 @@ router.post('/block-user', verify, (req, res) => {
         if(req.user.role === 'admin'){
 
             db.query('SELECT u.*, b.blacklist_id, b.email AS BlackListEmail FROM `users` u '+
-            'LEFT JOIN `blacklist` b ON u.user_id = b.blacklist_id ' +
-            'WHERE u.user_id = ?',[req.body.user_id], (err, results) => {
+            'LEFT JOIN `blacklist` b ON u.email = b.email ' +
+            'WHERE u.email LIKE ? && b.blacklist_id = ?',[req.body.email, req.body.user_id], (err, results) => {
                 if(err){
                     console.log(err);
                     res.status(400).json(err);
                 }else{
-                    if(results[0].BlackListEmail === null){
-                        db.query('INSERT INTO `blacklist` (blacklist_id, email) VALUES (?,?)', [req.body.user_id, req.body.email], (err, results) => {
+                    if(results.length === 0){
+                        db.query('SELECT user_id, email FROM `users` WHERE email LIKE ? ',[req.body.email], (err, results2) => {
                             if(err){
                                 console.log(err);
                                 res.status(400).json({result: false});
                             }else{
-                                // console.log(results);
-                                res.json({result: true});
+                                let sql = 'INSERT INTO `blacklist` (blacklist_id, email) VALUES ';
+                                results2.map(r => {
+                                    sql += `(${r.user_id}, '${r.email}'),`;
+                                });
+                                var str1 = sql.replace(/,$/,";");
+                                console.log(str1);
+                                db.query(str1, (err3, results3) => {
+                                    if(err3){
+                                        console.log(err3);
+                                        res.status(400).json({result: false});
+                                    }else{
+                                        res.json({result: true});                                          
+                                    }
+                                });
                             }
-                        });
-                    }else if(results[0].BlackListEmail === req.body.email){
-                        db.query('DELETE FROM `blacklist` WHERE blacklist_id = ?', [req.body.user_id], (err, results) => {
+                        })
+                    }else if(results.length > 0 && results[0].BlackListEmail === req.body.email){
+                        db.query('DELETE FROM `blacklist` WHERE email LIKE ?', [req.body.email], (err, results) => {
                             if(err){
                                 console.log(err);
                                 res.status(400).json({result: false});

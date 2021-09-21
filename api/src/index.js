@@ -1,18 +1,38 @@
 const express = require('express');
+var session = require('express-session')
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const db = require('./database/db');
 const fs = require('fs');
 var nodemailer = require('nodemailer');
+const passport = require('passport');
+const FacebookStrategy = require('passport-facebook').Strategy;
+const TwitterStrategy = require('passport-twitter').Strategy;
+const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const { registerValidate, emailTestValidate } = require('./helpers/validations');
+var https = require('https');
+var http = require('http');
+var privateKey  = fs.readFileSync('ssl/selfsigned.key', 'utf8');
+var certificate = fs.readFileSync('ssl/selfsigned.crt', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
+const axios = require('axios');
+const randomstring = require("randomstring");
 
 require('dotenv').config();
 
 const app = express();
 app.use('*', cors());
+app.use(session({ secret: 'SECRET',
+                    resave: false,
+                    saveUninitialized: true,
+                    cookie: { secure: true } 
+                }));
 app.use(express.json({ limit: '12MB' }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 var authRouter = require('./routes/auth');
 var userRouter = require('./routes/user');
@@ -28,8 +48,146 @@ app.get('/', (req, res) => {
 
 //Helpers/Tests
 
-app.get('/test', (req, res) => {
+app.get('/rand', (req, res) => {
+    let strings = [];
+    for(let i = 0; i < 100; i++){
+        strings.push(randomstring.generate({
+            length: 8,
+            charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+          }));
+    }
+    res.json(strings);
+});
 
+//Social Login Begin
+
+
+/* To emulate creating token on client */
+//Facebook
+passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: "https://localhost:8443/auth/facebook/callback",
+    profileFields: ['id', 'displayName', 'name', 'email']
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    var user = {
+        'email': profile.emails[0].value,
+        'name' : profile.name.givenName + ' ' + profile.name.familyName,
+        'id'   : profile.id,
+        'token': accessToken
+    }
+    return cb(null, user);
+  }
+));
+
+passport.serializeUser(function(user, cb) {
+    cb(null, user);
+});
+
+// used to deserialize the user
+passport.deserializeUser(function(id, cb) {
+    return cb(null,user)
+});
+
+app.get('/auth/facebook', passport.authenticate('facebook' , {session: false, authType: 'reauthenticate', scope: ['email', 'public_profile']}));
+
+app.get('/auth/facebook/callback',
+  passport.authenticate('facebook', { failureRedirect: '/test' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    console.log(req.user);
+    res.json(req.user.token);
+});
+
+/* To emulate creating token on client */
+//Twitter
+passport.use(new TwitterStrategy({
+    consumerKey: process.env.TWITTER_API_KEY,
+    consumerSecret: process.env.TWITTER_API_KEY_SECRET,
+    callbackURL: "https://127.0.0.1:8443/auth/twitter/callback"
+    },
+    function(token, tokenSecret, profile, done) {
+        console.log(token);
+        console.log(tokenSecret);
+        console.log(profile);
+        var user = {
+            'name': profile.username,
+            'id' : profile.id,
+            'photo' : profile.photos[0].value,
+            'token': token
+        }
+        // console.log(token);
+        // console.log(profile);
+        done(null, user);
+    }
+));
+
+app.get('/auth/twitter', passport.authenticate('twitter'));
+
+app.get('/auth/twitter/callback',
+  passport.authenticate('twitter', { failureRedirect: '/home' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    console.log(req.user.name);
+    // console.log(req.user);
+    res.json(req.user);
+});
+
+//Google
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "https://localhost:8443/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+        console.log(profile);
+        var user = {
+            'profile': profile,
+            'accessToken': accessToken
+        }
+       done(null, user);
+  }
+));
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['openid', 'profile', 'email', 'https://www.googleapis.com/auth/plus.login'] }));
+
+app.get('/auth/google/callback',passport.authenticate('google', { failureRedirect: '/login' }),
+    function(req, res) {
+        res.json(req.user);
+    }
+);
+
+//Social Login End
+app.get('/logout',function (req, res){
+    req.logout();
+    res.send('Logged out?');
+});
+
+app.get('/test', (req, res) => {
+    axios.get('https://graph.facebook.com/v11.0/3198393003728480/picture?type=large')
+    .then(function (response){
+        console.log(response.request.res.responseUrl);
+        axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
+        .then( response => {
+            db.query('INSERT INTO facebook_photo (avatar) VALUES (?)',[Buffer.from(response.data, 'binary')], (err, result) => {
+                if(err){
+                    console.log(err);
+                    res.json(err);
+                }else{
+                    console.log('Inserted');
+                    res.json('Inserted');
+                }
+            });
+        })
+    })
+    .catch(function (error){
+        res.json(error);
+    })
+});
+
+app.get('/logsucc', (req, res) => {
+    res.send('Oh yes');
 });
 
 app.get('/createdb', (req, res) => {
@@ -45,6 +203,8 @@ app.get('/createdb', (req, res) => {
         '`house_number` VARCHAR(100),' +
         '`phone` VARCHAR(20),' +
         '`role` ENUM(\'user\', \'admin\'),' +
+        '`provider` ENUM(\'vksz\', \'facebook\', \'google\', \'twitter\'),' +
+        '`provider_id` INT NOT NULL ,' +
         '`confirmed` BOOLEAN DEFAULT 0,' +
         '`avatar` MEDIUMBLOB,' +
         '`device_token` VARCHAR(255),' +
@@ -145,6 +305,17 @@ app.get('/createdb', (req, res) => {
     res.json('DB Check log');
 });
 
-app.listen(process.env.PORT, () => {
-    console.log(`Listening to ${process.env.PORT}`);
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(credentials, app);
+
+// app.listen(process.env.PORT, () => {
+//     console.log(`Listening to ${process.env.PORT}`);
+// });
+
+httpServer.listen(3001, () => {
+    console.log('http 3001');
+});
+
+httpsServer.listen(8443, () => {
+    console.log('https 8443');
 });

@@ -17,7 +17,7 @@ const joi_email = Joi.string().email().required();
 const joi_email_regex = Joi.string().pattern(new RegExp('^\\w+([\\.-]?\\w+)*@\\w+([\\.-]?\\w+)*(\\.\\w{2,})')).required().messages({'string.pattern.base': `Something wrong`});
 const joi_lastname = Joi.string().min(2).max(20).required(); 
 const joi_firstname = Joi.string().min(2).max(20).required(); 
-const joi_password = Joi.string().pattern(new RegExp('(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#$%&()"\'\[\\\]*+,-./{}~])(?=.{8,})')).required().messages({'string.pattern.base': `Password is bad`});;
+const joi_password = Joi.string().pattern(new RegExp('(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!?#$%&()"\'\[\\\]*+,-./{}~])(?=.{8,})')).required().messages({'string.pattern.base': `Password is bad`});;
 const joi_zip = Joi.string().pattern(new RegExp('[0-9][0-9][0-9][0-9]')).min(4).max(4).required().messages({'string.pattern.base': `Zip contains non numerical value`});
 const joi_city = Joi.string().min(2).max(35).required();
 const joi_street = Joi.string().min(1).max(35).required();
