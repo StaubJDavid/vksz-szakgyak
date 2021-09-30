@@ -274,7 +274,7 @@ router.post('/change/email', verify, (req, res) => {
         console.log(req.user.id);
         // res.json({result: true});
         if(req.user.role == 'admin'){
-            db.query('UPDATE users SET email = ? WHERE user_id = ? ', [req.body.email, req.body.user_id], (err, result) => {
+            db.query('UPDATE users SET email = ? WHERE user_id = ? && provider LIKE \'vksz\'', [req.body.email, req.body.user_id], (err, result) => {
                 if(err){
                     console.log(err);
                     res.status(400).json('Email update query fail');

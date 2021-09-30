@@ -334,7 +334,7 @@ router.get('/reset-password/:token', (req, res) => {
                     }
                 });
             }else{
-                res.status(400).json("Wrong token ver");
+                res.status(400).json("Wrong token");
             }           
         });
     } else{

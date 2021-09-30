@@ -66,9 +66,14 @@ router.post('/change/details', verify, (req, res) => {
     }  
 });
 
+//data:image/jpeg;base64,
 router.post('/change/avatar', verify, (req, res) => {
-    let cutBase64 = req.body.avatar.slice(req.body.avatar.indexOf(',')+1, req.body.avatar.length);
-    cutBase64 = cutBase64.slice(0, cutBase64.length-1);
+    let cutBase64 = req.body.avatar;
+
+    if(req.body.avatar.includes('data:image/jpeg;base64,')){
+        cutBase64 = req.body.avatar.slice(req.body.avatar.indexOf(',')+1, req.body.avatar.length);
+        cutBase64 = cutBase64.slice(0, cutBase64.length-1);
+    }
     const buffer = Buffer.from(cutBase64);
     const { error, value } = avatarValidate.validate({ 
         avatar: cutBase64,
@@ -229,7 +234,7 @@ router.post('/change/email', verify, (req, res) => {
         console.log(req.user.id);
         // res.json({result: true});
         if(req.user.id == req.body.user_id && req.user.email !== req.body.email){
-            db.query('SELECT user_id, email, pw_hash FROM users WHERE user_id = ?', [req.body.user_id], (err, results) => {
+            db.query('SELECT user_id, email, pw_hash FROM users WHERE user_id = ? AND provider = \'vksz\'', [req.body.user_id], (err, results) => {
                 if(err){
                     console.log(err);
                     res.status(400).json('change email query error');
@@ -237,15 +242,27 @@ router.post('/change/email', verify, (req, res) => {
                     if(results.length === 1){
                         if(bcrypt.compareSync(req.body.current_pass, results[0].pw_hash)){
                             // const hash = bcrypt.hashSync(req.body.current_pass, saltRounds); 
-                            db.query('UPDATE users SET email = ? WHERE user_id = ? ', [req.body.email, req.body.user_id], (err, result) => {
+                            db.query('SELECT user_id, email, provider FROM users WHERE email LIKE ? AND provider = \'vksz\'', [req.body.email], (err, result1) => {
                                 if(err){
                                     console.log(err);
-                                    res.status(400).json('Email update query fail');
+                                    res.status(400).json('New Email query fail');
                                 }else{
-                                    console.log(result);
-                                    res.json({result: true});
+                                    if(result1.length === 0){
+                                        db.query('UPDATE users SET email = ? WHERE user_id = ? AND provider = \'vksz\'', [req.body.email, req.body.user_id], (err, result) => {
+                                            if(err){
+                                                console.log(err);
+                                                res.status(400).json('Email update query fail');
+                                            }else{
+                                                console.log(result);
+                                                res.json({result: true});
+                                            }
+                                        });
+                                    }else{
+                                        console.log('New Email already exists');
+                                        res.status(400).json('New Email already exists');
+                                    }
                                 }
-                            });
+                            })
                         }else{
                             console.log('Wrong password');
                             res.status(400).json('Wrong password');
@@ -300,10 +317,6 @@ router.post('/update/device-token', verify, (req, res) => {
         console.log(error);
         res.status(400).json(error.message);
     }
-});
-
-router.post('/forgot-password', (req, res) => {
-    res.json({result: true});
 });
 
 module.exports = router;

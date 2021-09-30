@@ -108,14 +108,12 @@ passport.use(new TwitterStrategy({
     callbackURL: "https://127.0.0.1:8443/auth/twitter/callback"
     },
     function(token, tokenSecret, profile, done) {
-        console.log(token);
-        console.log(tokenSecret);
-        console.log(profile);
         var user = {
             'name': profile.username,
             'id' : profile.id,
             'photo' : profile.photos[0].value,
-            'token': token
+            'token': token,
+            'tokenSecret': tokenSecret
         }
         // console.log(token);
         // console.log(profile);
