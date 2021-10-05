@@ -17,28 +17,26 @@ admin.initializeApp({
 });
 
 //Admin Stuff
-router.post('/get-user-by-id', verify, (req,res) => {
-    console.log('Got a id request');
-
+router.post('/get-user-by-id', verify, (req,res) => { 
+    //Check datas validity
     const { error, value } = idValidate.validate({
         req_user_id: req.user.id,
         req_body_user_id: req.body.user_id
     });
 
     if(!error){
+        //Check if the requester is admin
         if(req.user.role === 'admin'){
-            // console.log('Request body email: ' + req.body.email);
-            console.log(req.body.user_id);
+            //Get user data with the id from the body (user_id)
             db.query('SELECT * FROM users WHERE user_id = ?',[req.body.user_id], (err, results) => {
                 if(err){
-                    console.log(req.body.user_id);
-                    console.log('Query1');
                     console.log(err);
                     res.status(400).json('Query error');
                 }else{
                     try {
                         const {user_id, email, last_name, first_name, role, pw_hash, phone, avatar, zip, city, street, house_number} = results[0];
-                        console.log(results);
+
+                        //Get users notifications settings
                         db.query('SELECT * FROM `user_notifs` un LEFT JOIN `news_services` ns ON un.service_id = ns.service_id  WHERE un.user_id = ?', [req.body.user_id], (err1, results1) => {
                             if(err1){
                                 console.log('Query2');
@@ -47,31 +45,15 @@ router.post('/get-user-by-id', verify, (req,res) => {
                             }else{
                                 if(results1.length !== 0){
                                     let communications = [];
+                                    //Populate the communications array with the notifications settings
                                     results1.map(r => {
                                         communications.push({name: r.service_name, email: r.notif_email, sms: r.notif_sms, phone: r.notif_push_up, service_id: r.service_id});
                                     });
     
-                                    console.log({
-                                        id: req.body.user_id,
-                                        username: last_name + " " + first_name,
-                                        //password: "no password for u",
-                                        email: email,
-                                        firstname: first_name,
-                                        lastname: last_name,
-                                        phone: phone,
-                                        roles: [role],
-                                        pic: avatar,
-                                        zip: zip,
-                                        city: city,
-                                        house_number: house_number,
-                                        street: street,
-                                        communication: communications
-                                    });
-    
+                                    //Populate and send user object
                                     res.json({user:{
                                         id: user_id,
                                         username: last_name + " " + first_name,
-                                        //password: "no password for u",
                                         email: email,
                                         firstname: first_name,
                                         lastname: last_name,
@@ -84,7 +66,6 @@ router.post('/get-user-by-id', verify, (req,res) => {
                                         street: street,
                                         communication: communications
                                     }});
-                                    console.log('Sent json');
                                 }else{
                                     console.log('There\'s no such user');
                                     res.status(400).json('There\'s no such user');
@@ -109,14 +90,16 @@ router.post('/get-user-by-id', verify, (req,res) => {
 });
 
 router.get('/get-users', verify, (req, res) => {
-
+    //Check datas validity
     const { error, value } = idValidate.validate({
         req_user_id: req.user.id,
         req_body_user_id: req.user.id
     });
 
     if(!error){
+        //Check if the requester is admin
         if(req.user.role === 'admin'){
+            //Get every user from users, with the blacklisted values
             db.query('SELECT u.*, b.blacklist_id, b.email as BlackListEmail FROM `users` u '+
             'LEFT JOIN `blacklist` b ON u.email LIKE b.email ' +
             'GROUP BY u.user_id', (err, results) => {
@@ -125,6 +108,7 @@ router.get('/get-users', verify, (req, res) => {
                     res.status(400).json(err);
                 }else{
                     let users = [];
+                    //Populate array with users
                     results.map(r => {
                         users.push({id: r.user_id,
                             email: r.email,
@@ -140,7 +124,8 @@ router.get('/get-users', verify, (req, res) => {
                             house_number: r.house_number,
                         });
                     })
-                    //console.log(users);
+
+                    //Send users
                     res.json({users: users});
                 }
             })
@@ -156,14 +141,16 @@ router.get('/get-users', verify, (req, res) => {
 });
 
 router.post('/block-user', verify, (req, res) => {
+    //Check datas validity
     const { error, value } = idValidate.validate({
         req_user_id: req.user.id,
         req_body_user_id: req.body.user_id
     });
 
     if(!error){
+        //Check if the requester is admin
         if(req.user.role === 'admin'){
-
+            //Check if user has a blacklisted property
             db.query('SELECT u.*, b.blacklist_id, b.email AS BlackListEmail FROM `users` u '+
             'LEFT JOIN `blacklist` b ON u.email = b.email ' +
             'WHERE u.email LIKE ? && b.blacklist_id = ?',[req.body.email, req.body.user_id], (err, results) => {
@@ -171,18 +158,23 @@ router.post('/block-user', verify, (req, res) => {
                     console.log(err);
                     res.status(400).json(err);
                 }else{
+                    //If the user is not blacklisted
                     if(results.length === 0){
+                        //Get every user_id that has the email we want to block
                         db.query('SELECT user_id, email FROM `users` WHERE email LIKE ? ',[req.body.email], (err, results2) => {
                             if(err){
                                 console.log(err);
                                 res.status(400).json({result: false});
                             }else{
+                                //Make INSERT query
                                 let sql = 'INSERT INTO `blacklist` (blacklist_id, email) VALUES ';
                                 results2.map(r => {
                                     sql += `(${r.user_id}, '${r.email}'),`;
                                 });
+
                                 var str1 = sql.replace(/,$/,";");
-                                console.log(str1);
+
+                                //Put the user_id, email into the blacklist table
                                 db.query(str1, (err3, results3) => {
                                     if(err3){
                                         console.log(err3);
@@ -193,7 +185,9 @@ router.post('/block-user', verify, (req, res) => {
                                 });
                             }
                         })
+                    //If the user is blacklisted
                     }else if(results.length > 0 && results[0].BlackListEmail === req.body.email){
+                        //Delete every row with the user's email
                         db.query('DELETE FROM `blacklist` WHERE email LIKE ?', [req.body.email], (err, results) => {
                             if(err){
                                 console.log(err);
@@ -221,6 +215,7 @@ router.post('/block-user', verify, (req, res) => {
 });
 
 router.post('/change/password', verify, (req, res) => {
+    //Check datas validity
     const { error, value } = changePasswordValidate.validate({
         password: req.body.new_pass,
         repeat_password: req.body.new_pass2,
@@ -229,12 +224,12 @@ router.post('/change/password', verify, (req, res) => {
     });
 
     if(!error){
-        console.log('Did I get called?');
-        console.log(req.body.user_id);
-        console.log(req.user.id);
-        // res.json({result: true});
+        //Check if the requester is admin and the new passwords match each other
         if(req.user.role === 'admin' && req.body.new_pass === req.body.new_pass2){
+            //Encrypt new password
             const hash = bcrypt.hashSync(req.body.new_pass, saltRounds);
+
+            //Update the user_id user with the new pw_hash
             db.query('UPDATE users SET pw_hash = ? WHERE user_id = ? ', [hash, req.body.user_id], (err, result) => {
                 if(err){
                     console.log(err);
@@ -262,6 +257,7 @@ router.post('/change/password', verify, (req, res) => {
 });
 
 router.post('/change/email', verify, (req, res) => {
+    //Check datas validity
     const { error, value } = changeEmailValidate.validate({
         email: req.body.email,
         req_user_id: req.user.id,
@@ -269,16 +265,15 @@ router.post('/change/email', verify, (req, res) => {
     });
 
     if(!error){
-        console.log('Did I get called?');
-        console.log(req.body);
-        console.log(req.user.id);
-        // res.json({result: true});
+        //Check if the requester is admin
         if(req.user.role == 'admin'){
+            //Change the email of the user where the provider is vksz
             db.query('UPDATE users SET email = ? WHERE user_id = ? && provider LIKE \'vksz\'', [req.body.email, req.body.user_id], (err, result) => {
                 if(err){
                     console.log(err);
                     res.status(400).json('Email update query fail');
                 }else{
+                    //Check if anything changed
                     if(JSON.parse(JSON.stringify(result)).changedRows === 0) {
                         console.log('Didnt change anything');
                         res.status(400).json('Didn\'t change anything');
@@ -301,20 +296,18 @@ router.post('/change/email', verify, (req, res) => {
 
 router.post('/send/users/notification', verify, (req, res) => {
     let {service_id, notif_id, title, message} = req.body;
-    console.log(req.body);
 
     service_id = parseInt(req.body.service_id, 10);
     notif_id = parseInt(req.body.notif_id, 10);
 
+    //Check datas validity
     const { error, value } = sendUsersNotifValidate.validate({
         service_id: service_id,
         notif_id: notif_id,
         title: title,
         message: message
     });
-    console.log('If elott');
     if(!error){
-        console.log('If utan nem error');
         //Send the same notification to every user who is "subscribed" to the given service_id and notif_id from req.body
         if(req.user.role === 'admin'){
             db.query('SELECT t.*, u.email, u.phone, u.device_token, ns.service_name, nt.notif_id FROM (select user_id, service_id, \'notif_email\' col, notif_email value ' +
@@ -332,9 +325,8 @@ router.post('/send/users/notification', verify, (req, res) => {
                     console.log(err);
                     res.status(400).json({result: false});
                 }else{
-                    //Send to "subscribed" people Push Up
+                    //Send to "subscribed" people Push
                     if(notif_id === 3){
-                        console.log('push up notif');
                         const emails = [];
                         results.map(r => {
                             emails.push({email: r.email, device_token: r.device_token});
@@ -346,6 +338,7 @@ router.post('/send/users/notification', verify, (req, res) => {
                             }               
                         });
                         
+                        //Replace html tags with nothing
                         message = message.replace(/<(.|\n)*?>/g, '');
                         const push_up_message = {
                             notification: {
@@ -355,9 +348,9 @@ router.post('/send/users/notification', verify, (req, res) => {
                             tokens: device_tokens,
                         };
                         
+                        //Send the push messages
                         admin.messaging().sendMulticast(push_up_message)
                             .then((response) => {
-                            console.log(response.successCount + ' messages were sent successfully');
                             res.json({result: true});
                             }).catch((error) => {
                                 console.log(error);
@@ -367,7 +360,6 @@ router.post('/send/users/notification', verify, (req, res) => {
                     
                     //Send to "subscribed" people email
                     if(notif_id === 1){
-                        console.log('Email notif');
 
                         const emails = [];
                         results.map(r => {
@@ -397,20 +389,18 @@ router.post('/send/users/notification', verify, (req, res) => {
                                 if (err) { 
                                     console.log('Sending to ' + to + ' failed: ' + err);
                                     return;
-                                }/* else { 
-                                    console.log('Sent to ' + to);
-                                }*/
+                                }
                         
                                 if (i === emails.length - 1) { mailOptions.transport.close(); }
                             });
                         });
-                        console.log('Sent out emails');
+                        // console.log('Sent out emails');
                         res.json({result: true});
                     }
 
                     //Send sms to "subscribed" users
                     if(notif_id === 2){
-                        console.log('sms notif');
+                        // console.log('sms notif');
                         res.json({result: true});
                     }
                 }
@@ -431,6 +421,7 @@ router.post('/send/user/notification', verify, (req, res) => {
     user_id = parseInt(req.body.user_id, 10);
     notif_id = parseInt(req.body.notif_id, 10);
 
+    //Check datas validity
     const { error, value } = sendUserNotifValidate.validate({
         notif_id: notif_id,
         title: title,
@@ -439,6 +430,7 @@ router.post('/send/user/notification', verify, (req, res) => {
     });
 
     if(!error){
+        //Check if requester is admin
         if(req.user.role === 'admin'){
             db.query('SELECT user_id, email, phone, device_token FROM users WHERE user_id = ?', [req.body.user_id], (err, results) => {
                 if(err){
@@ -447,10 +439,10 @@ router.post('/send/user/notification', verify, (req, res) => {
                 }else{
                     if(results.length === 1){
 
-                        //Push up notif
+                        //Push notif
                         if(notif_id === 3){
-                            console.log('push up notif');
 
+                            //Replace html tags with nothing
                             message = message.replace(/<(.|\n)*?>/g, '');
                             const push_up_message = {
                                 notification: {
@@ -472,7 +464,6 @@ router.post('/send/user/notification', verify, (req, res) => {
                         
                         //Send to "subscribed" people email
                         if(notif_id === 1){
-                            console.log('Email notif');
             
                             const transporter = nodemailer.createTransport({
                                 host: process.env.EMAIL_HOST,
@@ -505,7 +496,7 @@ router.post('/send/user/notification', verify, (req, res) => {
             
                         //Send sms to "subscribed" users
                         if(notif_id === 2){
-                            console.log('sms notif');
+                            // console.log('sms notif');
                             res.json({result: true});
                         }
                     }else{
@@ -525,14 +516,16 @@ router.post('/send/user/notification', verify, (req, res) => {
     }      
 });
 
-// /api/admin/get-news-notifs
 router.get('/get-news-notifs', verify, (req, res) => {
+    //Check if requester is admin
     if(req.user.role === 'admin'){
+        //Get every notification type
         db.query('SELECT * FROM notif_type', (err1, notif_types2) => {
             if(err1){
                 console.log(err1);
                 res.status(400).json(err1);
             }else{
+                //Get every news service
                 db.query('SELECT * FROM news_services', (err2, news_services2) => {
                     if(err2){
                         console.log(err2);
@@ -547,7 +540,8 @@ router.get('/get-news-notifs', verify, (req, res) => {
                         news_services2.map(ns => {
                             news_services_array.push({service_id: ns.service_id, service_name: ns.service_name});
                         });
-                        console.log('Huh');
+                        
+                        //Send news services, and notification types
                         res.json({news_notifs:{notif_types: notif_types_array, news_services: news_services_array}});
                     }
                 });
@@ -565,16 +559,16 @@ function verifyFCMToken (fcmToken){
     }, true)
 }
 
-router.get('/test', (req, res) => {
-    verifyFCMToken("ft904rBfRqSVx6LbdAVQ2q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl")
-    .then(result => {
-        console.log('Valid token');
-        res.json('Valid token');
-    })
-    .catch(err => {
-        console.log('Invalid token');
-        res.json('Invalid token');
-    })
-});
+// router.get('/test', (req, res) => {
+//     verifyFCMToken("ft904rBfRqSVx6LbdAVQ2q:APA91bFTvpUelNMTtcWQLev9oawYfzyTI3HBpU1-YIyEHmrsXEUTXZODJ9G-u7dPe7JiP_jxpxi1fzBA8jv9NiJEf5H8-1YkUWFvHnpxVuBU7dbU71ByGz8FPdUgwYwP0tiH6dtkUDCl")
+//     .then(result => {
+//         console.log('Valid token');
+//         res.json('Valid token');
+//     })
+//     .catch(err => {
+//         console.log('Invalid token');
+//         res.json('Invalid token');
+//     })
+// });
 
 module.exports = router;

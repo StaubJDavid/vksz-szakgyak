@@ -48,16 +48,16 @@ app.get('/', (req, res) => {
 
 //Helpers/Tests
 
-app.get('/rand', (req, res) => {
-    let strings = [];
-    for(let i = 0; i < 100; i++){
-        strings.push(randomstring.generate({
-            length: 8,
-            charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-          }));
-    }
-    res.json(strings);
-});
+// app.get('/rand', (req, res) => {
+//     let strings = [];
+//     for(let i = 0; i < 100; i++){
+//         strings.push(randomstring.generate({
+//             length: 8,
+//             charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+//           }));
+//     }
+//     res.json(strings);
+// });
 
 //Social Login Begin
 
@@ -157,36 +157,36 @@ app.get('/auth/google/callback',passport.authenticate('google', { failureRedirec
 );
 
 //Social Login End
-app.get('/logout',function (req, res){
-    req.logout();
-    res.send('Logged out?');
-});
+// app.get('/logout',function (req, res){
+//     req.logout();
+//     res.send('Logged out?');
+// });
 
-app.get('/test', (req, res) => {
-    axios.get('https://graph.facebook.com/v11.0/3198393003728480/picture?type=large')
-    .then(function (response){
-        console.log(response.request.res.responseUrl);
-        axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
-        .then( response => {
-            db.query('INSERT INTO facebook_photo (avatar) VALUES (?)',[Buffer.from(response.data, 'binary')], (err, result) => {
-                if(err){
-                    console.log(err);
-                    res.json(err);
-                }else{
-                    console.log('Inserted');
-                    res.json('Inserted');
-                }
-            });
-        })
-    })
-    .catch(function (error){
-        res.json(error);
-    })
-});
+// app.get('/test', (req, res) => {
+//     axios.get('https://graph.facebook.com/v11.0/3198393003728480/picture?type=large')
+//     .then(function (response){
+//         console.log(response.request.res.responseUrl);
+//         axios.get(response.request.res.responseUrl,{responseType: 'arraybuffer'})
+//         .then( response => {
+//             db.query('INSERT INTO facebook_photo (avatar) VALUES (?)',[Buffer.from(response.data, 'binary')], (err, result) => {
+//                 if(err){
+//                     console.log(err);
+//                     res.json(err);
+//                 }else{
+//                     console.log('Inserted');
+//                     res.json('Inserted');
+//                 }
+//             });
+//         })
+//     })
+//     .catch(function (error){
+//         res.json(error);
+//     })
+// });
 
-app.get('/logsucc', (req, res) => {
-    res.send('Oh yes');
-});
+// app.get('/logsucc', (req, res) => {
+//     res.send('Oh yes');
+// });
 
 app.get('/createdb', (req, res) => {
     let sql = 'CREATE TABLE IF NOT EXISTS `users` (' +
